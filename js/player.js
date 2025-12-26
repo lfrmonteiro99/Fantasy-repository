@@ -120,34 +120,31 @@ class Player extends Combatant {
             // Define animations based on sprite sheet rows
             // ROW NUMBERS: Adjust these based on your sprite sheet layout!
 
-            // Row 0: Idle animation (4 frames at 6 FPS)
+            // Row 0: Idle animation (just 1 frame for now - Naruto DS sprites have simple idle)
             this.animations.idle = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 0, col: 0}, {row: 0, col: 1}, {row: 0, col: 2}, {row: 0, col: 3}],
-                6
+                [{row: 0, col: 0}],  // Single frame idle
+                1
             );
 
-            // Row 1: Walk animation (6 frames at 10 FPS)
+            // Row 1: Walk animation (first 4 frames)
             this.animations.walk = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 1, col: 0}, {row: 1, col: 1}, {row: 1, col: 2},
-                 {row: 1, col: 3}, {row: 1, col: 4}, {row: 1, col: 5}],
+                [{row: 1, col: 0}, {row: 1, col: 1}, {row: 1, col: 2}, {row: 1, col: 3}],
                 10
             );
 
-            // Row 2: Run animation (6 frames at 12 FPS)
+            // Row 2: Run animation (first 4 frames)
             this.animations.run = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2},
-                 {row: 2, col: 3}, {row: 2, col: 4}, {row: 2, col: 5}],
+                [{row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2}, {row: 2, col: 3}],
                 12
             );
 
-            // Row 3: Attack animation (8 frames at 15 FPS, no loop)
+            // Row 3: Attack animation (first 5 frames, no loop)
             this.animations.attack = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3},
-                 {row: 3, col: 4}, {row: 3, col: 5}, {row: 3, col: 6}, {row: 3, col: 7}],
+                [{row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3}, {row: 3, col: 4}],
                 15
             );
             this.animations.attack.loop = false;
@@ -480,20 +477,29 @@ class Player extends Combatant {
 
         // Draw sprite animation or fallback to circle
         if (this.currentAnimation) {
-            // Sprite rendering
-            const size = this.radius * 2.5;  // Make sprite bigger than collision circle
+            // Sprite rendering with pixel-perfect alignment
+            const size = 76;  // Use actual sprite size (76x76) for pixel-perfect rendering
+
+            // Calculate position and round to nearest pixel for crisp rendering
+            const drawX = Math.round(screen.x - size/2);
+            const drawY = Math.round(screen.y - size/2);
 
             // Flip sprite based on facing direction (left/right)
             const flipX = this.facingAngle > Math.PI/2 || this.facingAngle < -Math.PI/2;
 
+            // Disable smoothing for pixel-perfect rendering
+            ctx.imageSmoothingEnabled = false;
+
             this.currentAnimation.draw(
                 ctx,
-                screen.x - size/2,
-                screen.y - size/2,
+                drawX,
+                drawY,
                 size,
                 size,
                 flipX
             );
+
+            ctx.imageSmoothingEnabled = true;
         } else {
             // Fallback: Draw circle if sprites not loaded
             Utils.drawCircle(ctx, screen.x, screen.y, this.radius, this.color, true);
