@@ -84,8 +84,82 @@ class Player extends Combatant {
             magnitude: 0 // 0 to 1
         };
 
+        // Sprite animations for movement
+        this.spriteSheet = null;
+        this.animations = {
+            idle: null,
+            walk: null,
+            run: null,
+            attack: null
+        };
+        this.currentAnimation = null;
+        this.isAttacking = false;
+        this.attackAnimationTime = 0;
+
+        // Load sprite sheet (will fall back to circles if not found)
+        this.loadSpriteSheet();
+
         // Visual
         this.color = charDef.color;
+    }
+
+    // Load sprite sheet for animations
+    async loadSpriteSheet() {
+        try {
+            // Try to load character-specific sprite sheet
+            // Frame size: adjust to match your sprite (32x32, 48x48, or 64x64)
+            const spritePath = `assets/sprites/player/${this.characterId}_sheet.png`;
+
+            this.spriteSheet = await SpriteManager.loadSpriteSheet(
+                `${this.characterId}_sheet`,
+                spritePath,
+                64,  // Frame width - ADJUST to match your sprite
+                64   // Frame height - ADJUST to match your sprite
+            );
+
+            // Define animations based on sprite sheet rows
+            // ROW NUMBERS: Adjust these based on your sprite sheet layout!
+
+            // Row 0: Idle animation (4 frames at 6 FPS)
+            this.animations.idle = new SpriteAnimation(
+                this.spriteSheet,
+                [{row: 0, col: 0}, {row: 0, col: 1}, {row: 0, col: 2}, {row: 0, col: 3}],
+                6
+            );
+
+            // Row 1: Walk animation (6 frames at 10 FPS)
+            this.animations.walk = new SpriteAnimation(
+                this.spriteSheet,
+                [{row: 1, col: 0}, {row: 1, col: 1}, {row: 1, col: 2},
+                 {row: 1, col: 3}, {row: 1, col: 4}, {row: 1, col: 5}],
+                10
+            );
+
+            // Row 2: Run animation (6 frames at 12 FPS)
+            this.animations.run = new SpriteAnimation(
+                this.spriteSheet,
+                [{row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2},
+                 {row: 2, col: 3}, {row: 2, col: 4}, {row: 2, col: 5}],
+                12
+            );
+
+            // Row 3: Attack animation (8 frames at 15 FPS, no loop)
+            this.animations.attack = new SpriteAnimation(
+                this.spriteSheet,
+                [{row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3},
+                 {row: 3, col: 4}, {row: 3, col: 5}, {row: 3, col: 6}, {row: 3, col: 7}],
+                15
+            );
+            this.animations.attack.loop = false;
+
+            // Set default animation
+            this.currentAnimation = this.animations.idle;
+
+            console.log(`✅ Sprite animations loaded for ${this.name}`);
+        } catch (err) {
+            console.log(`ℹ️ No sprite sheet found for ${this.characterId}, using default graphics`);
+            // Game will fall back to circle rendering
+        }
     }
 
     // Update player
@@ -119,6 +193,51 @@ class Player extends Combatant {
             this.animationFrame = Math.floor(this.animationTime * 8) % 4;
         } else {
             this.animationFrame = 0;
+        }
+
+        // Update attack animation state
+        if (this.isAttacking) {
+            this.attackAnimationTime -= dt;
+            if (this.attackAnimationTime <= 0) {
+                this.isAttacking = false;
+            }
+        }
+
+        // Switch sprite animations based on player state
+        if (this.animations.idle) {  // Only if sprites loaded
+            if (this.isAttacking && this.animations.attack) {
+                // Attacking - play attack animation
+                if (this.currentAnimation !== this.animations.attack) {
+                    this.currentAnimation = this.animations.attack;
+                    this.currentAnimation.reset();
+                }
+            } else if (this.isMoving) {
+                // Moving - calculate speed percentage for walk/run
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const speedPercent = speed / this.speed;
+
+                if (speedPercent > 0.6 && this.animations.run) {
+                    // Fast movement = Run
+                    if (this.currentAnimation !== this.animations.run) {
+                        this.currentAnimation = this.animations.run;
+                    }
+                } else if (this.animations.walk) {
+                    // Slow movement = Walk
+                    if (this.currentAnimation !== this.animations.walk) {
+                        this.currentAnimation = this.animations.walk;
+                    }
+                }
+            } else {
+                // Idle - standing still
+                if (this.currentAnimation !== this.animations.idle) {
+                    this.currentAnimation = this.animations.idle;
+                }
+            }
+
+            // Update current animation
+            if (this.currentAnimation) {
+                this.currentAnimation.update(dt);
+            }
         }
 
         // Auto-attack disabled - player must use melee button or abilities
@@ -359,23 +478,41 @@ class Player extends Combatant {
             }
         }
 
-        // Draw player circle
-        Utils.drawCircle(ctx, screen.x, screen.y, this.radius, this.color, true);
+        // Draw sprite animation or fallback to circle
+        if (this.currentAnimation) {
+            // Sprite rendering
+            const size = this.radius * 2.5;  // Make sprite bigger than collision circle
 
-        // Draw inner circle
-        Utils.drawCircle(ctx, screen.x, screen.y, this.radius * 0.7, '#FFD700', true);
+            // Flip sprite based on facing direction (left/right)
+            const flipX = this.facingAngle > Math.PI/2 || this.facingAngle < -Math.PI/2;
 
-        // Draw directional indicator
-        const indicatorLength = this.radius + 10;
-        const indicatorX = screen.x + Math.cos(this.facingAngle) * indicatorLength;
-        const indicatorY = screen.y + Math.sin(this.facingAngle) * indicatorLength;
+            this.currentAnimation.draw(
+                ctx,
+                screen.x - size/2,
+                screen.y - size/2,
+                size,
+                size,
+                flipX
+            );
+        } else {
+            // Fallback: Draw circle if sprites not loaded
+            Utils.drawCircle(ctx, screen.x, screen.y, this.radius, this.color, true);
 
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(screen.x, screen.y);
-        ctx.lineTo(indicatorX, indicatorY);
-        ctx.stroke();
+            // Draw inner circle
+            Utils.drawCircle(ctx, screen.x, screen.y, this.radius * 0.7, '#FFD700', true);
+
+            // Draw directional indicator
+            const indicatorLength = this.radius + 10;
+            const indicatorX = screen.x + Math.cos(this.facingAngle) * indicatorLength;
+            const indicatorY = screen.y + Math.sin(this.facingAngle) * indicatorLength;
+
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(screen.x, screen.y);
+            ctx.lineTo(indicatorX, indicatorY);
+            ctx.stroke();
+        }
 
         // Draw name
         Utils.drawText(ctx, this.name, screen.x, screen.y - this.radius - 15, {

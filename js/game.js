@@ -320,6 +320,10 @@ class NarutoActionRPG {
     performMeleeAttack() {
         if (!this.player || this.player.isDead) return;
 
+        // Trigger attack animation
+        this.player.isAttacking = true;
+        this.player.attackAnimationTime = 0.5;  // Attack animation duration
+
         // Find nearest enemy in melee range
         const meleeRange = 80;
         let nearestEnemy = null;
