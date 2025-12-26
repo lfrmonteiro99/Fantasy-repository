@@ -31,8 +31,13 @@ const UISystem = {
             inventoryModal: document.getElementById('inventory-modal'),
             abilitiesModal: document.getElementById('abilities-modal'),
             levelUpNotification: document.getElementById('level-up-notification'),
+            missionSelectModal: document.getElementById('mission-select-modal'),
+            shopModal: document.getElementById('shop-modal'),
+            deathModal: document.getElementById('death-modal'),
+            missionCompleteModal: document.getElementById('mission-complete-modal'),
 
             // Other
+            eventLog: document.getElementById('event-log'),
             damageNumbers: document.getElementById('damage-numbers'),
             fileInput: document.getElementById('file-input')
         };
@@ -433,6 +438,29 @@ const UISystem = {
         setTimeout(() => {
             notif.remove();
         }, duration);
+    },
+
+    // Add message to event log
+    addEventLog(message, type = 'info') {
+        const log = this.elements.eventLog;
+        if (!log) return;
+
+        const messageEl = document.createElement('div');
+        messageEl.className = `event-message ${type}`;
+        messageEl.textContent = message;
+
+        log.appendChild(messageEl);
+
+        // Remove message after animation completes
+        setTimeout(() => {
+            messageEl.remove();
+        }, 4000);
+
+        // Limit number of messages (keep last 10)
+        const messages = log.querySelectorAll('.event-message');
+        if (messages.length > 10) {
+            messages[0].remove();
+        }
     },
 
     // Show level up notification

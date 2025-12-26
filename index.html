@@ -151,6 +151,11 @@
                 <canvas id="mini-map-canvas" width="150" height="150"></canvas>
             </div>
 
+            <!-- Event Log / Combat Feed -->
+            <div class="event-log">
+                <div class="event-log-content" id="event-log"></div>
+            </div>
+
             <!-- Menu Button -->
             <button class="hud-menu-btn" id="pause-btn">
                 <span>≡</span>
@@ -223,6 +228,57 @@
                     </div>
                 </div>
                 <button class="menu-btn close-btn" id="close-abilities-btn">Close</button>
+            </div>
+        </div>
+
+        <!-- Mission Select Modal -->
+        <div id="mission-select-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="mission-title"></h2>
+                <p id="mission-description"></p>
+                <p id="mission-difficulty"></p>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="accept-mission-btn">Accept Mission</button>
+                    <button class="menu-btn close-btn" id="cancel-mission-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Modal -->
+        <div id="shop-modal" class="modal hidden">
+            <div class="modal-content large">
+                <h2 id="shop-title">Shop</h2>
+                <div class="shop-layout">
+                    <div class="shop-items" id="shop-items"></div>
+                    <div class="shop-info">
+                        <p>Gold: <span id="shop-player-gold">0</span></p>
+                    </div>
+                </div>
+                <button class="menu-btn close-btn" id="close-shop-btn">Close</button>
+            </div>
+        </div>
+
+        <!-- Death Modal -->
+        <div id="death-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>YOU DIED!</h2>
+                <p>Return to village and try again?</p>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="respawn-btn">Return to Village</button>
+                    <button class="menu-btn" id="death-menu-btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Complete Modal -->
+        <div id="mission-complete-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>MISSION COMPLETE!</h2>
+                <div id="mission-rewards"></div>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="return-to-village-btn">Return to Village</button>
+                    <button class="menu-btn close-btn" id="stay-on-map-btn">Continue Exploring</button>
+                </div>
             </div>
         </div>
 
