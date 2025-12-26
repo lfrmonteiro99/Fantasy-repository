@@ -403,13 +403,13 @@ class NarutoActionRPG {
 
         // Update player
         if (this.player && !this.player.isDead) {
-            PlayerSystem.update(this.player, this, dt);
+            this.player.update(this, dt);
         }
 
         // Update enemies
         if (this.enemies) {
             for (let enemy of this.enemies) {
-                EnemySystem.update(enemy, this, dt);
+                enemy.update(this, dt);
             }
 
             // Remove dead enemies after delay
@@ -476,14 +476,13 @@ class NarutoActionRPG {
             // Draw enemies
             if (this.enemies) {
                 for (let enemy of this.enemies) {
-                    EnemySystem.draw(this.ctx, enemy, this.camera);
+                    enemy.draw(this.ctx, this.camera);
                 }
             }
 
             // Draw player
             if (this.player) {
-                PlayerSystem.draw(this.ctx, this.player, this.camera);
-                PlayerSystem.drawHealthBar(this.ctx, this.player, this.camera);
+                this.player.draw(this.ctx, this.camera);
             }
 
             // Draw projectiles
