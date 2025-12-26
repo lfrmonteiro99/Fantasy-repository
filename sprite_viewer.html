@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naruto Sprite Sheet Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #FF6B1A;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sprite-display {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .controls label {
+            display: inline-block;
+            margin-right: 15px;
+            color: #FF6B1A;
+        }
+        .controls input, .controls select {
+            margin: 5px;
+            padding: 5px;
+        }
+        canvas {
+            border: 2px solid #FF6B1A;
+            background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 20px 20px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        #fullSheet {
+            max-width: 100%;
+            border: 2px solid #FF6B1A;
+            margin-top: 10px;
+            background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 20px 20px;
+        }
+        .row-preview {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        .row-preview canvas {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Naruto Sprite Sheet Viewer</h1>
+
+        <div class="info">
+            <h3>Sprite Sheet Info</h3>
+            <p><strong>File:</strong> assets/sprites/player/naruto_sheet.png</p>
+            <p><strong>Dimensions:</strong> 912 x 2753 pixels</p>
+            <p><strong>Frame Size:</strong> 76 x 76 pixels</p>
+            <p><strong>Layout:</strong> 12 columns × 36 rows = 432 total frames</p>
+        </div>
+
+        <div class="controls">
+            <h3>Animation Preview</h3>
+            <label>
+                Row: <input type="number" id="rowInput" value="0" min="0" max="35">
+            </label>
+            <label>
+                Start Column: <input type="number" id="startCol" value="0" min="0" max="11">
+            </label>
+            <label>
+                End Column: <input type="number" id="endCol" value="5" min="0" max="11">
+            </label>
+            <label>
+                FPS: <input type="number" id="fps" value="10" min="1" max="60">
+            </label>
+            <button onclick="updatePreview()">Update Preview</button>
+            <button onclick="toggleAnimation()">Play/Pause</button>
+        </div>
+
+        <div class="sprite-display">
+            <h3>Animated Preview (3x scale)</h3>
+            <canvas id="animCanvas" width="228" height="228"></canvas>
+            <p id="frameInfo">Frame: 0 | Row: 0, Col: 0</p>
+        </div>
+
+        <div class="sprite-display">
+            <h3>Full Sprite Sheet</h3>
+            <p>Scroll to find animations. Common layouts:</p>
+            <ul>
+                <li><strong>Idle:</strong> Usually early rows (0-2)</li>
+                <li><strong>Walk/Run:</strong> Middle rows</li>
+                <li><strong>Attack:</strong> Various rows</li>
+                <li><strong>Special moves:</strong> Later rows</li>
+            </ul>
+            <img id="fullSheet" src="assets/sprites/player/naruto_sheet.png">
+        </div>
+
+        <div class="sprite-display">
+            <h3>Quick Row Preview (first 6 frames of each row)</h3>
+            <p>Use this to quickly identify which row has which animation</p>
+            <div id="rowPreviews"></div>
+        </div>
+    </div>
+
+    <script>
+        const img = new Image();
+        img.src = 'assets/sprites/player/naruto_sheet.png';
+
+        const frameWidth = 76;
+        const frameHeight = 76;
+        const columns = 12;
+        const rows = 36;
+
+        let currentFrame = 0;
+        let animationFrames = [];
+        let isPlaying = true;
+        let lastFrameTime = 0;
+        let frameDuration = 100; // ms
+
+        const canvas = document.getElementById('animCanvas');
+        const ctx = canvas.getContext('2d');
+
+        img.onload = () => {
+            updatePreview();
+            generateRowPreviews();
+            animate(0);
+        };
+
+        function updatePreview() {
+            const row = parseInt(document.getElementById('rowInput').value);
+            const startCol = parseInt(document.getElementById('startCol').value);
+            const endCol = parseInt(document.getElementById('endCol').value);
+            const fps = parseInt(document.getElementById('fps').value);
+
+            frameDuration = 1000 / fps;
+
+            // Generate frame list
+            animationFrames = [];
+            for (let col = startCol; col <= endCol; col++) {
+                animationFrames.push({ row, col });
+            }
+
+            currentFrame = 0;
+        }
+
+        function toggleAnimation() {
+            isPlaying = !isPlaying;
+        }
+
+        function animate(timestamp) {
+            if (isPlaying && timestamp - lastFrameTime > frameDuration) {
+                lastFrameTime = timestamp;
+
+                const frame = animationFrames[currentFrame];
+                if (frame) {
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw frame at 3x scale
+                    ctx.drawImage(
+                        img,
+                        frame.col * frameWidth,
+                        frame.row * frameHeight,
+                        frameWidth,
+                        frameHeight,
+                        0, 0,
+                        frameWidth * 3,
+                        frameHeight * 3
+                    );
+
+                    // Update info
+                    document.getElementById('frameInfo').textContent =
+                        `Frame: ${currentFrame + 1}/${animationFrames.length} | Row: ${frame.row}, Col: ${frame.col}`;
+
+                    currentFrame = (currentFrame + 1) % animationFrames.length;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function generateRowPreviews() {
+            const container = document.getElementById('rowPreviews');
+            container.innerHTML = '';
+
+            for (let row = 0; row < Math.min(rows, 20); row++) { // Show first 20 rows
+                const div = document.createElement('div');
+                div.className = 'row-preview';
+
+                const title = document.createElement('strong');
+                title.textContent = `Row ${row}: `;
+                div.appendChild(title);
+
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = frameWidth * 6;
+                previewCanvas.height = frameHeight;
+                previewCanvas.style.imageRendering = 'pixelated';
+
+                const previewCtx = previewCanvas.getContext('2d');
+
+                // Draw first 6 frames of this row
+                for (let col = 0; col < 6; col++) {
+                    previewCtx.drawImage(
+                        img,
+                        col * frameWidth,
+                        row * frameHeight,
+                        frameWidth,
+                        frameHeight,
+                        col * frameWidth,
+                        0,
+                        frameWidth,
+                        frameHeight
+                    );
+                }
+
+                div.appendChild(previewCanvas);
+                container.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>

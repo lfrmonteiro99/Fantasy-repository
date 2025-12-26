@@ -113,8 +113,8 @@ class Player extends Combatant {
             this.spriteSheet = await SpriteManager.loadSpriteSheet(
                 `${this.characterId}_sheet`,
                 spritePath,
-                64,  // Frame width - ADJUST to match your sprite
-                64   // Frame height - ADJUST to match your sprite
+                76,  // Frame width - DS Naruto Shinobi Rumble sprites
+                76   // Frame height - DS Naruto Shinobi Rumble sprites
             );
 
             // Define animations based on sprite sheet rows
