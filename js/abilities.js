@@ -426,8 +426,8 @@ const AbilitySystem = {
 
                     const distance = Utils.distance(proj.x, proj.y, enemy.x, enemy.y);
                     if (distance <= proj.radius + enemy.radius) {
-                        // Hit enemy
-                        enemy.health -= proj.damage;
+                        // Hit enemy - use proper damage system
+                        EnemySystem.takeDamage(enemy, proj.damage, game);
                         game.showDamageNumber(enemy.x, enemy.y, proj.damage, 'player-damage');
                         AudioManager.play('enemy_hit');
 
@@ -473,7 +473,7 @@ const AbilitySystem = {
             if (nearestDistance <= clone.radius + nearestEnemy.radius + 30) {
                 clone.attackCooldown -= dt;
                 if (clone.attackCooldown <= 0) {
-                    nearestEnemy.health -= clone.damage;
+                    EnemySystem.takeDamage(nearestEnemy, clone.damage, game);
                     game.showDamageNumber(nearestEnemy.x, nearestEnemy.y, clone.damage, 'player-damage');
                     AudioManager.play('enemy_hit');
                     clone.attackCooldown = clone.attackRate;

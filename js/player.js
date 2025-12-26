@@ -283,7 +283,7 @@ const PlayerSystem = {
                 }
 
                 damage = Utils.calculateDamage(damage);
-                nearestEnemy.health -= damage;
+                EnemySystem.takeDamage(nearestEnemy, damage, game);
 
                 game.showDamageNumber(nearestEnemy.x, nearestEnemy.y, damage, 'player-damage');
                 AudioManager.play('naruto_attack');
