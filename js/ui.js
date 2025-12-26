@@ -1,0 +1,495 @@
+// UI System for Naruto Action RPG
+
+const UISystem = {
+    elements: {},
+    initialized: false,
+    currentScreen: null,
+    game: null,
+
+    init(game) {
+        this.game = game;
+
+        // Cache DOM elements
+        this.elements = {
+            // Screens
+            loadingScreen: document.getElementById('loading-screen'),
+            mainMenu: document.getElementById('main-menu'),
+            characterSelect: document.getElementById('character-select'),
+
+            // HUD
+            hud: document.getElementById('hud'),
+            playerLevel: document.getElementById('player-level'),
+            healthFill: document.getElementById('health-fill'),
+            healthText: document.getElementById('health-text'),
+            chakraFill: document.getElementById('chakra-fill'),
+            chakraText: document.getElementById('chakra-text'),
+            xpFill: document.getElementById('xp-fill'),
+            xpText: document.getElementById('xp-text'),
+
+            // Modals
+            pauseMenu: document.getElementById('pause-menu'),
+            inventoryModal: document.getElementById('inventory-modal'),
+            abilitiesModal: document.getElementById('abilities-modal'),
+            levelUpNotification: document.getElementById('level-up-notification'),
+
+            // Other
+            damageNumbers: document.getElementById('damage-numbers'),
+            fileInput: document.getElementById('file-input')
+        };
+
+        // Setup event listeners
+        this.setupEventListeners();
+
+        this.initialized = true;
+    },
+
+    setupEventListeners() {
+        // Main menu buttons
+        document.getElementById('new-game-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.showScreen('character-select');
+        });
+
+        document.getElementById('load-game-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.elements.fileInput.click();
+        });
+
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            alert('Settings coming soon!');
+        });
+
+        // Character select
+        const characterCards = document.querySelectorAll('.character-card');
+        characterCards.forEach(card => {
+            card.addEventListener('click', () => {
+                if (card.classList.contains('locked')) {
+                    AudioManager.playUI('error');
+                    return;
+                }
+
+                AudioManager.playUI('click');
+
+                // Remove previous selection
+                characterCards.forEach(c => c.classList.remove('selected'));
+
+                // Select this card
+                card.classList.add('selected');
+
+                // Enable start button
+                document.getElementById('start-game-btn').disabled = false;
+
+                // Store selected character
+                this.selectedCharacter = card.dataset.character;
+            });
+        });
+
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            if (!this.selectedCharacter) return;
+
+            AudioManager.playUI('click');
+            this.game.startGame(this.selectedCharacter);
+        });
+
+        // Pause menu
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.showModal('pause-menu');
+            this.game.pause();
+        });
+
+        document.getElementById('resume-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.hideModal('pause-menu');
+            this.game.resume();
+        });
+
+        document.getElementById('inventory-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.hideModal('pause-menu');
+            this.showModal('inventory-modal');
+            this.updateInventoryUI();
+        });
+
+        document.getElementById('abilities-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.hideModal('pause-menu');
+            this.showModal('abilities-modal');
+            this.updateAbilitiesUI();
+        });
+
+        document.getElementById('save-game-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            SaveSystem.exportSave(this.game);
+        });
+
+        document.getElementById('main-menu-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            if (confirm('Return to main menu? Unsaved progress will be lost.')) {
+                this.game.returnToMainMenu();
+            }
+        });
+
+        // Modal close buttons
+        document.getElementById('close-inventory-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.hideModal('inventory-modal');
+            this.showModal('pause-menu');
+        });
+
+        document.getElementById('close-abilities-btn').addEventListener('click', () => {
+            AudioManager.playUI('click');
+            this.hideModal('abilities-modal');
+            this.showModal('pause-menu');
+        });
+
+        // File input for load game
+        this.elements.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                SaveSystem.importSave(file, this.game);
+            }
+        });
+    },
+
+    // Show screen
+    showScreen(screenId) {
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+
+        // Show HUD if entering game
+        if (screenId === 'game') {
+            this.elements.hud.classList.remove('hidden');
+            this.currentScreen = 'game';
+        } else {
+            this.elements.hud.classList.add('hidden');
+            const screen = document.getElementById(screenId);
+            if (screen) {
+                screen.classList.add('active');
+                this.currentScreen = screenId;
+            }
+        }
+    },
+
+    // Show modal
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+        }
+    },
+
+    // Hide modal
+    hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    },
+
+    // Update HUD
+    updateHUD(player) {
+        if (!player) return;
+
+        // Update level
+        this.elements.playerLevel.textContent = player.level;
+
+        // Update health
+        const healthPercent = (player.health / player.maxHealth) * 100;
+        this.elements.healthFill.style.width = healthPercent + '%';
+        this.elements.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`;
+
+        // Update chakra
+        const chakraPercent = (player.chakra / player.maxChakra) * 100;
+        this.elements.chakraFill.style.width = chakraPercent + '%';
+        this.elements.chakraText.textContent = `${Math.ceil(player.chakra)}/${player.maxChakra}`;
+
+        // Update XP
+        const xpPercent = (player.xp / player.xpToNextLevel) * 100;
+        this.elements.xpFill.style.width = xpPercent + '%';
+        this.elements.xpText.textContent = `${Math.ceil(player.xp)}/${player.xpToNextLevel}`;
+
+        // Update abilities
+        this.updateAbilityButtons(player);
+    },
+
+    // Update ability buttons
+    updateAbilityButtons(player) {
+        const abilityBtns = document.querySelectorAll('.ability-btn');
+
+        abilityBtns.forEach((btn, index) => {
+            const abilityId = player.equippedAbilities[index];
+            const nameEl = btn.querySelector('.ability-name');
+            const cooldownEl = btn.querySelector('.ability-cooldown');
+
+            if (abilityId) {
+                const ability = AbilitySystem.getAbility(abilityId);
+                if (ability) {
+                    // Update name
+                    nameEl.textContent = ability.name.split(' ')[0]; // First word only
+
+                    // Update cooldown
+                    const cooldown = player.abilityCooldowns[abilityId] || 0;
+                    if (cooldown > 0) {
+                        btn.classList.add('on-cooldown');
+                        cooldownEl.textContent = Math.ceil(cooldown);
+                    } else {
+                        btn.classList.remove('on-cooldown');
+                        cooldownEl.textContent = '';
+                    }
+
+                    // Check if can cast
+                    if (!AbilitySystem.canCast(ability, player)) {
+                        btn.style.opacity = '0.5';
+                    } else {
+                        btn.style.opacity = '1.0';
+                    }
+                }
+            } else {
+                nameEl.textContent = '';
+                btn.classList.remove('on-cooldown');
+            }
+        });
+    },
+
+    // Update inventory UI
+    updateInventoryUI() {
+        const player = this.game.player;
+        if (!player) return;
+
+        // Update equipped items
+        for (let slot in player.equipment) {
+            const item = player.equipment[slot];
+            const slotEl = document.getElementById(`equipped-${slot}`);
+
+            if (item) {
+                slotEl.textContent = `${item.icon} ${item.name}`;
+                slotEl.classList.add('filled');
+            } else {
+                slotEl.textContent = 'Empty';
+                slotEl.classList.remove('filled');
+            }
+        }
+
+        // Update stats
+        const stats = ItemSystem.getTotalStats(player);
+        document.getElementById('stat-attack').textContent = stats.attack;
+        document.getElementById('stat-defense').textContent = stats.defense;
+        document.getElementById('stat-chakra-regen').textContent = stats.chakraRegen.toFixed(1);
+
+        // Update inventory grid
+        const inventoryGrid = document.getElementById('inventory-grid');
+        inventoryGrid.innerHTML = '';
+
+        player.inventory.forEach((item, index) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = `inventory-item ${item.rarity}`;
+            itemEl.innerHTML = `
+                <div class="item-icon">${item.icon}</div>
+                <div class="item-name">${item.name}</div>
+            `;
+
+            itemEl.addEventListener('click', () => {
+                AudioManager.playUI('click');
+                this.showItemMenu(item, index);
+            });
+
+            inventoryGrid.appendChild(itemEl);
+        });
+    },
+
+    // Show item menu (equip/sell)
+    showItemMenu(item, index) {
+        const player = this.game.player;
+
+        const action = confirm(`${item.name}\n\n${item.description}\n\nEquip this item?`);
+
+        if (action) {
+            // Remove from inventory
+            ItemSystem.removeFromInventory(player, index);
+
+            // Equip
+            ItemSystem.equipItem(player, item);
+
+            // Update UI
+            this.updateInventoryUI();
+        }
+    },
+
+    // Update abilities UI
+    updateAbilitiesUI() {
+        const player = this.game.player;
+        if (!player) return;
+
+        // Update equipped abilities
+        const equippedContainer = document.getElementById('equipped-abilities');
+        equippedContainer.innerHTML = '';
+
+        player.equippedAbilities.forEach((abilityId, index) => {
+            if (abilityId) {
+                const ability = AbilitySystem.getAbility(abilityId);
+                if (ability) {
+                    const abilityEl = this.createAbilityCard(ability, true, index);
+                    equippedContainer.appendChild(abilityEl);
+                }
+            }
+        });
+
+        // Update available abilities
+        const availableContainer = document.getElementById('available-abilities');
+        availableContainer.innerHTML = '';
+
+        player.availableAbilities.forEach(abilityId => {
+            const ability = AbilitySystem.getAbility(abilityId);
+            if (ability) {
+                const isEquipped = player.equippedAbilities.includes(abilityId);
+                const isLocked = player.level < ability.unlockLevel;
+
+                const abilityEl = this.createAbilityCard(ability, false, -1, isLocked, isEquipped);
+                availableContainer.appendChild(abilityEl);
+            }
+        });
+    },
+
+    // Create ability card element
+    createAbilityCard(ability, isEquipped, slot, isLocked = false, alreadyEquipped = false) {
+        const card = document.createElement('div');
+        card.className = 'ability-card';
+
+        if (isLocked) {
+            card.classList.add('locked');
+        }
+
+        const rank = ability.currentRank || 0;
+        const rankInfo = ability.ranks ? ability.ranks[rank] : null;
+
+        card.innerHTML = `
+            <h4>${ability.name} ${rankInfo ? `(Rank ${rank + 1})` : ''}</h4>
+            <p>${ability.description}</p>
+            <div class="ability-stats">
+                <span>Chakra: ${ability.chakraCost}</span>
+                <span>Cooldown: ${ability.cooldown}s</span>
+                ${ability.damage > 0 ? `<span>Damage: ${ability.damage}</span>` : ''}
+            </div>
+            ${isLocked ? '<p style="color: #FF6B1A;">Unlocks at level ' + ability.unlockLevel + '</p>' : ''}
+            ${alreadyEquipped ? '<p style="color: #00FF00;">Equipped</p>' : ''}
+        `;
+
+        if (!isLocked && !alreadyEquipped) {
+            card.addEventListener('click', () => {
+                AudioManager.playUI('click');
+                // TODO: Implement ability swapping
+                alert('Ability swapping coming soon!');
+            });
+        }
+
+        return card;
+    },
+
+    // Show damage number
+    showDamageNumber(x, y, damage, type) {
+        const damageEl = document.createElement('div');
+        damageEl.className = `damage-number ${type}`;
+        damageEl.textContent = Math.ceil(damage);
+
+        // Convert world coordinates to screen coordinates
+        const screenPos = Utils.worldToScreen(x, y, this.game.camera);
+
+        damageEl.style.left = screenPos.x + 'px';
+        damageEl.style.top = screenPos.y + 'px';
+
+        this.elements.damageNumbers.appendChild(damageEl);
+
+        // Remove after animation
+        setTimeout(() => {
+            damageEl.remove();
+        }, 1000);
+    },
+
+    // Show notification
+    showNotification(message, duration = 2000) {
+        // Create notification element
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.textContent = message;
+        notif.style.position = 'absolute';
+        notif.style.top = '50%';
+        notif.style.left = '50%';
+        notif.style.transform = 'translate(-50%, -50%)';
+        notif.style.background = 'rgba(255, 107, 26, 0.9)';
+        notif.style.color = '#FFFFFF';
+        notif.style.padding = '20px 40px';
+        notif.style.borderRadius = '10px';
+        notif.style.fontSize = '1.5em';
+        notif.style.fontWeight = 'bold';
+        notif.style.zIndex = '700';
+        notif.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
+
+        document.getElementById('game-container').appendChild(notif);
+
+        setTimeout(() => {
+            notif.remove();
+        }, duration);
+    },
+
+    // Show level up notification
+    showLevelUpNotification(level) {
+        const notif = this.elements.levelUpNotification;
+        document.getElementById('level-up-value').textContent = level;
+
+        notif.classList.add('active');
+
+        setTimeout(() => {
+            notif.classList.remove('active');
+        }, 3000);
+    },
+
+    // Show interact prompt
+    showInteractPrompt(message) {
+        // Simple implementation - could be enhanced
+        if (!this.interactPrompt) {
+            this.interactPrompt = document.createElement('div');
+            this.interactPrompt.style.position = 'absolute';
+            this.interactPrompt.style.bottom = '120px';
+            this.interactPrompt.style.left = '50%';
+            this.interactPrompt.style.transform = 'translateX(-50%)';
+            this.interactPrompt.style.background = 'rgba(0, 0, 0, 0.8)';
+            this.interactPrompt.style.color = '#FFFFFF';
+            this.interactPrompt.style.padding = '10px 20px';
+            this.interactPrompt.style.borderRadius = '5px';
+            this.interactPrompt.style.fontSize = '1em';
+            this.interactPrompt.style.zIndex = '150';
+            document.getElementById('game-container').appendChild(this.interactPrompt);
+        }
+
+        this.interactPrompt.textContent = message;
+        this.interactPrompt.style.display = 'block';
+
+        // Clear after a bit if not updated
+        clearTimeout(this.interactPromptTimeout);
+        this.interactPromptTimeout = setTimeout(() => {
+            if (this.interactPrompt) {
+                this.interactPrompt.style.display = 'none';
+            }
+        }, 100);
+    },
+
+    // Hide loading screen
+    hideLoadingScreen() {
+        setTimeout(() => {
+            this.elements.loadingScreen.classList.remove('active');
+            this.showScreen('main-menu');
+        }, 1000);
+    },
+
+    // Update loading progress
+    updateLoadingProgress(percent) {
+        const progressBar = document.querySelector('.loading-progress');
+        if (progressBar) {
+            progressBar.style.width = percent + '%';
+        }
+    }
+};

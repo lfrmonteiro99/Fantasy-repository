@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Naruto Action RPG</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <h1>NARUTO</h1>
+                <h2>ACTION RPG</h2>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen">
+            <div class="menu-content">
+                <h1>NARUTO</h1>
+                <h2>ACTION RPG</h2>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="new-game-btn">New Game</button>
+                    <button class="menu-btn" id="load-game-btn">Load Game</button>
+                    <button class="menu-btn" id="settings-btn">Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Select -->
+        <div id="character-select" class="screen">
+            <div class="char-select-content">
+                <h2>SELECT YOUR NINJA</h2>
+                <div class="class-info">
+                    <h3>Ninjutsu Specialist</h3>
+                    <p>Masters of chakra-based techniques and powerful jutsu</p>
+                </div>
+                <div class="character-grid">
+                    <div class="character-card unlocked" data-character="naruto">
+                        <div class="char-portrait">
+                            <div class="char-placeholder naruto">N</div>
+                        </div>
+                        <h4>Naruto Uzumaki</h4>
+                        <p class="char-status">Available</p>
+                    </div>
+                    <div class="character-card locked" data-character="sasuke">
+                        <div class="char-portrait">
+                            <div class="char-placeholder sasuke">S</div>
+                        </div>
+                        <h4>Sasuke Uchiha</h4>
+                        <p class="char-status">Locked</p>
+                    </div>
+                </div>
+                <button class="menu-btn" id="start-game-btn" disabled>Start Adventure</button>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- HUD Overlay -->
+        <div id="hud" class="hidden">
+            <!-- Top Bar -->
+            <div class="hud-top">
+                <div class="player-info">
+                    <div class="player-name">Naruto Uzumaki</div>
+                    <div class="player-level">Lv. <span id="player-level">1</span></div>
+                </div>
+                <div class="bars-container">
+                    <div class="bar-wrapper">
+                        <div class="bar health-bar">
+                            <div class="bar-fill" id="health-fill"></div>
+                            <span class="bar-text" id="health-text">100/100</span>
+                        </div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar chakra-bar">
+                            <div class="bar-fill" id="chakra-fill"></div>
+                            <span class="bar-text" id="chakra-text">100/100</span>
+                        </div>
+                    </div>
+                    <div class="bar-wrapper xp-wrapper">
+                        <div class="bar xp-bar">
+                            <div class="bar-fill" id="xp-fill"></div>
+                            <span class="bar-text" id="xp-text">0/100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ability Buttons -->
+            <div class="abilities-container">
+                <div class="ability-btn" data-slot="0">
+                    <div class="ability-icon">Q</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-name"></div>
+                </div>
+                <div class="ability-btn" data-slot="1">
+                    <div class="ability-icon">W</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-name"></div>
+                </div>
+                <div class="ability-btn" data-slot="2">
+                    <div class="ability-icon">E</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-name"></div>
+                </div>
+                <div class="ability-btn" data-slot="3">
+                    <div class="ability-icon">R</div>
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-name"></div>
+                </div>
+            </div>
+
+            <!-- Mobile Joystick -->
+            <div id="joystick-area" class="mobile-only">
+                <div id="joystick-base"></div>
+                <div id="joystick-stick"></div>
+            </div>
+
+            <!-- Mini Map -->
+            <div class="mini-map">
+                <canvas id="mini-map-canvas" width="150" height="150"></canvas>
+            </div>
+
+            <!-- Menu Button -->
+            <button class="hud-menu-btn" id="pause-btn">
+                <span>≡</span>
+            </button>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="modal hidden">
+            <div class="modal-content">
+                <h2>MENU</h2>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="resume-btn">Resume</button>
+                    <button class="menu-btn" id="inventory-btn">Inventory</button>
+                    <button class="menu-btn" id="abilities-btn">Abilities</button>
+                    <button class="menu-btn" id="save-game-btn">Save Game</button>
+                    <button class="menu-btn" id="main-menu-btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Modal -->
+        <div id="inventory-modal" class="modal hidden">
+            <div class="modal-content large">
+                <h2>INVENTORY & EQUIPMENT</h2>
+                <div class="inventory-layout">
+                    <div class="equipment-panel">
+                        <h3>Equipped</h3>
+                        <div class="equipment-slots">
+                            <div class="equip-slot" data-slot="weapon">
+                                <div class="slot-label">Weapon</div>
+                                <div class="slot-item" id="equipped-weapon"></div>
+                            </div>
+                            <div class="equip-slot" data-slot="armor">
+                                <div class="slot-label">Armor</div>
+                                <div class="slot-item" id="equipped-armor"></div>
+                            </div>
+                            <div class="equip-slot" data-slot="accessory">
+                                <div class="slot-label">Accessory</div>
+                                <div class="slot-item" id="equipped-accessory"></div>
+                            </div>
+                        </div>
+                        <div class="stats-panel">
+                            <h4>Stats</h4>
+                            <div class="stat-line">Attack: <span id="stat-attack">0</span></div>
+                            <div class="stat-line">Defense: <span id="stat-defense">0</span></div>
+                            <div class="stat-line">Chakra Regen: <span id="stat-chakra-regen">0</span></div>
+                        </div>
+                    </div>
+                    <div class="inventory-panel">
+                        <h3>Inventory</h3>
+                        <div class="inventory-grid" id="inventory-grid"></div>
+                    </div>
+                </div>
+                <button class="menu-btn close-btn" id="close-inventory-btn">Close</button>
+            </div>
+        </div>
+
+        <!-- Abilities Modal -->
+        <div id="abilities-modal" class="modal hidden">
+            <div class="modal-content large">
+                <h2>ABILITIES</h2>
+                <div class="abilities-layout">
+                    <div class="equipped-abilities-panel">
+                        <h3>Equipped (4 Max)</h3>
+                        <div class="equipped-abilities" id="equipped-abilities"></div>
+                    </div>
+                    <div class="available-abilities-panel">
+                        <h3>Available Abilities</h3>
+                        <div class="available-abilities" id="available-abilities"></div>
+                    </div>
+                </div>
+                <button class="menu-btn close-btn" id="close-abilities-btn">Close</button>
+            </div>
+        </div>
+
+        <!-- Level Up Notification -->
+        <div id="level-up-notification" class="notification hidden">
+            <h2>LEVEL UP!</h2>
+            <p>Level <span id="level-up-value">2</span></p>
+            <div class="level-up-rewards" id="level-up-rewards"></div>
+        </div>
+
+        <!-- Damage Numbers Container -->
+        <div id="damage-numbers"></div>
+    </div>
+
+    <!-- File Input for Load Game -->
+    <input type="file" id="file-input" accept=".json" style="display: none;">
+
+    <!-- Game Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/abilities.js"></script>
+    <script src="js/items.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/maps.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
