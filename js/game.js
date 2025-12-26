@@ -592,6 +592,27 @@ class NarutoActionRPG {
 
             // Deactivate hidden mist
             MapSystem.deactivateHiddenMist();
+
+            // Award mission completion rewards
+            setTimeout(() => {
+                const goldReward = 500;
+                const xpReward = 300;
+
+                this.player.gold += goldReward;
+                PlayerSystem.gainXP(this.player, xpReward, this);
+
+                this.showNotification(`Mission Complete!\n+${goldReward} Gold\n+${xpReward} XP`, 4000);
+
+                // Return to hub after showing rewards
+                setTimeout(() => {
+                    if (confirm('Mission Complete! Return to village?')) {
+                        MapSystem.loadMap('konoha_hub', this);
+                    } else {
+                        // Stay on map but show exit zone is available
+                        this.showNotification('You can return to the village at the exit zone', 3000);
+                    }
+                }, 2000);
+            }, 1500);
         }, 500);
     }
 

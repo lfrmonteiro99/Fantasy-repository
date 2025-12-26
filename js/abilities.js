@@ -419,8 +419,8 @@ const AbilitySystem = {
                 this.updateShadowClone(proj, game, dt);
             }
 
-            // Check collisions with enemies
-            if (proj.owner && game.enemies) {
+            // Check collisions with enemies (player projectiles)
+            if (proj.owner && proj.owner.characterId && game.enemies) {
                 for (let enemy of game.enemies) {
                     if (enemy.isDead) continue;
 
@@ -435,6 +435,22 @@ const AbilitySystem = {
                         if (proj.type !== 'shadow_clone') {
                             return false;
                         }
+                    }
+                }
+            }
+
+            // Check collisions with player (enemy projectiles)
+            if (proj.owner && proj.owner.typeId && game.player) {
+                if (!game.player.isDead) {
+                    const distance = Utils.distance(proj.x, proj.y, game.player.x, game.player.y);
+                    if (distance <= proj.radius + game.player.radius) {
+                        // Hit player
+                        PlayerSystem.takeDamage(game.player, proj.damage, game);
+                        game.showDamageNumber(game.player.x, game.player.y, proj.damage, 'enemy-damage');
+                        AudioManager.play('naruto_hurt');
+
+                        // Remove projectile
+                        return false;
                     }
                 }
             }
@@ -533,6 +549,22 @@ const AbilitySystem = {
                 ctx.fillStyle = '#666666';
                 ctx.fillRect(4, -4, 4, 8);
                 ctx.resetTransform();
+            } else if (proj.type === 'water_dragon') {
+                // Draw water dragon projectile
+                const alpha = 1 - (proj.age / proj.lifetime) * 0.4;
+                ctx.globalAlpha = alpha;
+
+                // Draw dragon body
+                Utils.drawCircle(ctx, screen.x, screen.y, proj.radius, proj.color || '#1E90FF', true);
+                Utils.drawCircle(ctx, screen.x, screen.y, proj.radius * 0.6, '#4169E1', true);
+
+                // Draw dragon emoji
+                Utils.drawText(ctx, '🐉', screen.x, screen.y - 8, {
+                    align: 'center',
+                    font: '24px Arial'
+                });
+
+                ctx.globalAlpha = 1.0;
             }
 
             ctx.restore();

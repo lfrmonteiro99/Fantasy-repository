@@ -53,6 +53,7 @@ const EnemySystem = {
             attackCooldown: 1.2,
             detectionRange: 500,
             lootTable: 'zabuza',
+            abilities: ['water_dragon', 'executioners_blade'],
             phases: [
                 {
                     healthThreshold: 1.0,
@@ -118,6 +119,11 @@ const EnemySystem = {
             detectionRange: type.detectionRange,
             isDead: false,
             deathTime: 0,
+
+            // Abilities
+            abilities: type.abilities || [],
+            abilityCooldowns: {},
+            lastAbilityTime: 0,
 
             // AI
             state: 'idle', // idle, chase, attack
@@ -231,6 +237,19 @@ const EnemySystem = {
     // Attack player
     attackPlayer(enemy, player, game, dt) {
         enemy.lastAttackTime += dt;
+        enemy.lastAbilityTime += dt;
+
+        // Try to use ability first (if enemy has abilities)
+        if (enemy.abilities && enemy.abilities.length > 0 && enemy.lastAbilityTime >= 5) {
+            // 50% chance to use ability instead of basic attack
+            if (Math.random() < 0.5) {
+                const abilityUsed = this.useEnemyAbility(enemy, player, game);
+                if (abilityUsed) {
+                    enemy.lastAbilityTime = 0;
+                    return;
+                }
+            }
+        }
 
         let cooldown = enemy.attackCooldown;
 
@@ -487,5 +506,155 @@ const EnemySystem = {
                 game.enemies.push(enemy);
             }
         }
+    },
+
+    // Enemy Abilities
+    enemyAbilities: {
+        'poison_claw': {
+            name: 'Poison Claw',
+            type: 'melee',
+            cooldown: 8,
+            cast(enemy, player, game) {
+                // Deal damage + poison effect
+                let damage = enemy.damage * 1.5;
+                damage = Utils.calculateDamage(damage);
+                PlayerSystem.takeDamage(player, damage, game);
+
+                // Apply poison status (deal damage over time)
+                if (!player.statusEffects) player.statusEffects = [];
+                player.statusEffects.push({
+                    type: 'poison',
+                    duration: 5,
+                    value: { damagePerSecond: 5 },
+                    onUpdate(target, dt) {
+                        this.duration -= dt;
+                        const poisonDamage = this.value.damagePerSecond * dt;
+                        target.health -= poisonDamage;
+                        if (target.health < 0) target.health = 0;
+                    }
+                });
+
+                game.showNotification('Poisoned!', 2000);
+                this.createPoisonEffect(enemy, player, game);
+            },
+            createPoisonEffect(enemy, player, game) {
+                if (!game.particles) game.particles = [];
+                for (let i = 0; i < 20; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Utils.randomFloat(80, 150);
+                    const particle = Utils.createParticle(
+                        player.x,
+                        player.y,
+                        Math.cos(angle) * speed,
+                        Math.sin(angle) * speed,
+                        '#8B008B',
+                        Utils.randomFloat(4, 8),
+                        0.6
+                    );
+                    game.particles.push(particle);
+                }
+            }
+        },
+
+        'water_dragon': {
+            name: 'Water Dragon Jutsu',
+            type: 'projectile',
+            cooldown: 10,
+            cast(enemy, player, game) {
+                if (!game.projectiles) game.projectiles = [];
+
+                const angle = Utils.angleBetween(enemy.x, enemy.y, player.x, player.y);
+                const speed = 300;
+
+                const projectile = {
+                    x: enemy.x,
+                    y: enemy.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 25,
+                    damage: enemy.damage * 2.5,
+                    lifetime: 3,
+                    age: 0,
+                    type: 'water_dragon',
+                    owner: enemy,
+                    color: '#1E90FF'
+                };
+
+                game.projectiles.push(projectile);
+                game.showNotification('Water Dragon Jutsu!', 2000);
+                AudioManager.play('boss_hit');
+                this.createWaterEffect(enemy, game);
+            },
+            createWaterEffect(enemy, game) {
+                if (!game.particles) game.particles = [];
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Utils.randomFloat(100, 200);
+                    const particle = Utils.createParticle(
+                        enemy.x,
+                        enemy.y,
+                        Math.cos(angle) * speed,
+                        Math.sin(angle) * speed,
+                        Utils.randomChoice(['#1E90FF', '#4169E1', '#00BFFF']),
+                        Utils.randomFloat(5, 10),
+                        0.8
+                    );
+                    game.particles.push(particle);
+                }
+            }
+        },
+
+        'executioners_blade': {
+            name: 'Executioners Blade',
+            type: 'melee_aoe',
+            cooldown: 12,
+            cast(enemy, player, game) {
+                // AOE attack around Zabuza
+                const range = 150;
+                const dist = Utils.distance(enemy.x, enemy.y, player.x, player.y);
+
+                if (dist <= range) {
+                    let damage = enemy.damage * 3;
+                    damage = Utils.calculateDamage(damage);
+                    PlayerSystem.takeDamage(player, damage, game);
+                }
+
+                game.showNotification('Executioners Blade!', 2000);
+                AudioManager.play('boss_hit');
+                this.createBladeEffect(enemy, game);
+            },
+            createBladeEffect(enemy, game) {
+                if (!game.particles) game.particles = [];
+                for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Utils.randomFloat(150, 300);
+                    const particle = Utils.createParticle(
+                        enemy.x,
+                        enemy.y,
+                        Math.cos(angle) * speed,
+                        Math.sin(angle) * speed,
+                        Utils.randomChoice(['#808080', '#C0C0C0', '#FFFFFF']),
+                        Utils.randomFloat(6, 12),
+                        0.5
+                    );
+                    game.particles.push(particle);
+                }
+            }
+        }
+    },
+
+    // Use enemy ability
+    useEnemyAbility(enemy, player, game) {
+        if (!enemy.abilities || enemy.abilities.length === 0) return false;
+
+        // Pick a random ability
+        const abilityId = Utils.randomChoice(enemy.abilities);
+        const ability = this.enemyAbilities[abilityId];
+
+        if (!ability) return false;
+
+        // Cast the ability
+        ability.cast(enemy, player, game);
+        return true;
     }
 };

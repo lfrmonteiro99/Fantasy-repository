@@ -184,8 +184,8 @@ const PlayerSystem = {
             player.animationFrame = 0;
         }
 
-        // Auto-attack nearby enemies
-        this.updateAutoAttack(player, game, dt);
+        // Auto-attack disabled - player must use melee button or abilities
+        // this.updateAutoAttack(player, game, dt);
     },
 
     // Update movement
