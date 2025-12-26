@@ -204,6 +204,7 @@ class Player extends Combatant {
     // Gain XP
     gainXP(amount, game) {
         this.xp += amount;
+        UISystem.addEventLog(`+${amount} XP`, 'xp');
 
         // Check level up
         while (this.xp >= this.xpToNextLevel) {
@@ -266,7 +267,7 @@ class Player extends Combatant {
 
         const ability = AbilitySystem.getAbility(abilityId);
         if (!ability) {
-            game.showNotification('Ability not found!', 2000);
+            UISystem.addEventLog('Ability not found!', 'info');
             return false;
         }
 
@@ -289,13 +290,16 @@ class Player extends Combatant {
         if (!result) {
             // Show why it failed
             if (this.chakra < ability.chakraCost) {
-                game.showNotification('Not enough chakra!', 1500);
+                UISystem.addEventLog('Not enough chakra!', 'ability');
             } else {
                 const cooldown = this.abilityCooldowns[abilityId] || 0;
                 if (cooldown > 0) {
-                    game.showNotification(`Cooldown: ${Math.ceil(cooldown)}s`, 1000);
+                    UISystem.addEventLog(`${ability.name}: ${Math.ceil(cooldown)}s`, 'ability');
                 }
             }
+        } else {
+            // Show ability used
+            UISystem.addEventLog(`${ability.name}!`, 'ability');
         }
 
         return result;

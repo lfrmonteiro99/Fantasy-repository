@@ -408,6 +408,14 @@ const UISystem = {
 
         this.elements.damageNumbers.appendChild(damageEl);
 
+        // Add to event log
+        const dmg = Math.ceil(damage);
+        if (type === 'player-damage') {
+            this.addEventLog(`Dealt ${dmg} damage`, 'damage-dealt');
+        } else if (type === 'enemy-damage') {
+            this.addEventLog(`Took ${dmg} damage`, 'damage-received');
+        }
+
         // Remove after animation
         setTimeout(() => {
             damageEl.remove();
