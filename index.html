@@ -287,27 +287,25 @@
 
         // Auto-enter fullscreen on first interaction
         let hasEnteredFullscreen = false;
-        function tryEnterFullscreen() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        function tryEnterFullscreen(e) {
             if (!hasEnteredFullscreen && isMobile) {
                 hasEnteredFullscreen = true;
                 enterFullscreen();
             }
         }
 
-        // Attempt fullscreen on various events
-        document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
-        document.addEventListener('click', tryEnterFullscreen, { once: true });
-
-        // Re-enter fullscreen if exited
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                setTimeout(enterFullscreen, 1000);
-            }
-        });
+        // Attempt fullscreen on ANY interaction
+        if (isMobile) {
+            ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(event => {
+                document.addEventListener(event, tryEnterFullscreen, { once: true });
+            });
+        }
 
         // Expose fullscreen function globally
         window.enterFullscreen = enterFullscreen;
+        window.isMobileDevice = isMobile;
     </script>
 
     <!-- Game Scripts -->
