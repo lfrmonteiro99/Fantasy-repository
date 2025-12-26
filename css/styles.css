@@ -588,32 +588,50 @@ body {
 
 #joystick-area {
     position: absolute;
-    bottom: max(10px, env(safe-area-inset-bottom));
-    left: max(10px, env(safe-area-inset-left));
-    width: 100px;
-    height: 100px;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    left: max(20px, env(safe-area-inset-left));
+    width: 120px;
+    height: 120px;
+    z-index: 100;
 }
 
 #joystick-base {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: rgba(26,26,26,0.6);
+    background: radial-gradient(circle at center, rgba(26,26,26,0.8) 0%, rgba(26,26,26,0.5) 100%);
     border: 3px solid var(--naruto-orange);
     border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,107,26,0.2);
+}
+
+#joystick-base::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,107,26,0.2);
+    border: 1px dashed rgba(255,107,26,0.4);
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 #joystick-stick {
     position: absolute;
     width: 50%;
     height: 50%;
-    background: var(--naruto-orange);
-    border: 2px solid var(--naruto-white);
+    background: radial-gradient(circle at 30% 30%, var(--naruto-orange), #d55a15);
+    border: 3px solid var(--naruto-white);
     border-radius: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    transition: all 0.1s ease;
+    transition: transform 0.05s ease-out;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,255,255,0.3);
+    pointer-events: none;
 }
 
 /* Mini Map */

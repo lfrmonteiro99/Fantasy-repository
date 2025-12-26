@@ -206,6 +206,12 @@ class NarutoActionRPG {
             this.joystick.active = false;
             this.joystick.distance = 0;
             joystickStick.style.transform = 'translate(-50%, -50%)';
+
+            // Deactivate player joystick input
+            if (this.player) {
+                this.player.joystickInput.active = false;
+                this.player.joystickInput.magnitude = 0;
+            }
         };
 
         joystickArea.addEventListener('touchstart', handleJoystickStart, { passive: false });
@@ -233,11 +239,18 @@ class NarutoActionRPG {
 
         stick.style.transform = `translate(calc(-50% + ${limitedDx}px), calc(-50% + ${limitedDy}px))`;
 
-        // Set player target based on joystick
-        if (this.player && this.joystick.distance > 5) {
-            const moveDistance = 100;
-            this.player.targetX = this.player.x + Math.cos(this.joystick.angle) * moveDistance;
-            this.player.targetY = this.player.y + Math.sin(this.joystick.angle) * moveDistance;
+        // Feed joystick input to player for analog control
+        if (this.player) {
+            const magnitude = this.joystick.distance / maxDistance; // Normalize to 0-1
+
+            if (magnitude > 0.1) {
+                this.player.joystickInput.active = true;
+                this.player.joystickInput.angle = this.joystick.angle;
+                this.player.joystickInput.magnitude = magnitude;
+            } else {
+                this.player.joystickInput.active = false;
+                this.player.joystickInput.magnitude = 0;
+            }
         }
     }
 

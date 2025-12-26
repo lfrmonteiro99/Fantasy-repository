@@ -77,6 +77,13 @@ class Player extends Combatant {
         this.lastMouseX = x + 100;
         this.lastMouseY = y;
 
+        // Joystick input
+        this.joystickInput = {
+            active: false,
+            angle: 0,
+            magnitude: 0 // 0 to 1
+        };
+
         // Visual
         this.color = charDef.color;
     }
@@ -121,33 +128,55 @@ class Player extends Combatant {
     // Update movement
     updateMovement(game, dt, speedMod) {
         const moveSpeed = this.speed * speedMod;
-        const distToTarget = this.distanceTo({ x: this.targetX, y: this.targetY });
 
-        if (distToTarget > 5) {
+        // Priority: Joystick input over click-to-move
+        if (this.joystickInput.active && this.joystickInput.magnitude > 0.1) {
+            // Analog joystick control
             this.isMoving = true;
+            this.facingAngle = this.joystickInput.angle;
 
-            const angle = Utils.angleBetween(this.x, this.y, this.targetX, this.targetY);
-            this.facingAngle = angle;
-
-            this.vx = Math.cos(angle) * moveSpeed;
-            this.vy = Math.sin(angle) * moveSpeed;
+            // Apply velocity with magnitude scaling (0-100% speed)
+            const speedMultiplier = this.joystickInput.magnitude;
+            this.vx = Math.cos(this.joystickInput.angle) * moveSpeed * speedMultiplier;
+            this.vy = Math.sin(this.joystickInput.angle) * moveSpeed * speedMultiplier;
 
             // Move
             this.x += this.vx * dt;
             this.y += this.vy * dt;
 
-            // Stop if reached target
-            if (this.distanceTo({ x: this.targetX, y: this.targetY }) < moveSpeed * dt) {
-                this.x = this.targetX;
-                this.y = this.targetY;
+            // Update target to current position (prevents click-to-move interference)
+            this.targetX = this.x;
+            this.targetY = this.y;
+        } else {
+            // Click-to-move behavior
+            const distToTarget = this.distanceTo({ x: this.targetX, y: this.targetY });
+
+            if (distToTarget > 5) {
+                this.isMoving = true;
+
+                const angle = Utils.angleBetween(this.x, this.y, this.targetX, this.targetY);
+                this.facingAngle = angle;
+
+                this.vx = Math.cos(angle) * moveSpeed;
+                this.vy = Math.sin(angle) * moveSpeed;
+
+                // Move
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+
+                // Stop if reached target
+                if (this.distanceTo({ x: this.targetX, y: this.targetY }) < moveSpeed * dt) {
+                    this.x = this.targetX;
+                    this.y = this.targetY;
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.isMoving = false;
+                }
+            } else {
+                this.isMoving = false;
                 this.vx = 0;
                 this.vy = 0;
-                this.isMoving = false;
             }
-        } else {
-            this.isMoving = false;
-            this.vx = 0;
-            this.vy = 0;
         }
 
         // Keep player in bounds
