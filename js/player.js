@@ -113,8 +113,8 @@ class Player extends Combatant {
             this.spriteSheet = await SpriteManager.loadSpriteSheet(
                 `${this.characterId}_sheet`,
                 spritePath,
-                76,  // Frame width - DS Naruto Shinobi Rumble sprites
-                76   // Frame height - DS Naruto Shinobi Rumble sprites
+                76,  // Frame width - Naruto DS sprites
+                88   // Frame height - Naruto DS sprites (CORRECTED)
             );
 
             // Define animations based on sprite sheet rows
@@ -478,12 +478,13 @@ class Player extends Combatant {
         // Draw sprite animation or fallback to circle
         if (this.currentAnimation) {
             // Sprite rendering with pixel-perfect alignment
-            const size = 76;  // Actual sprite frame size
+            const spriteWidth = 76;
+            const spriteHeight = 88;
 
-            // ANALYZED POSITIONING: Character feet are at Y=75 in 76px frame
+            // ANALYZED POSITIONING: Character feet are at Y=87 in 76x88px frame
             // Bottom of sprite should align with player position
-            const drawX = Math.round(screen.x - size/2);  // Center horizontally
-            const drawY = Math.round(screen.y - 75);      // Feet at player position (analyzed from sprite)
+            const drawX = Math.round(screen.x - spriteWidth/2);  // Center horizontally
+            const drawY = Math.round(screen.y - 87);              // Feet at player position (analyzed)
 
             // Flip sprite based on facing direction (left/right)
             const flipX = this.facingAngle > Math.PI/2 || this.facingAngle < -Math.PI/2;
@@ -495,8 +496,8 @@ class Player extends Combatant {
                 ctx,
                 drawX,
                 drawY,
-                size,
-                size,
+                spriteWidth,
+                spriteHeight,
                 flipX
             );
 
