@@ -480,9 +480,10 @@ class Player extends Combatant {
             // Sprite rendering with pixel-perfect alignment
             const size = 76;  // Use actual sprite size (76x76) for pixel-perfect rendering
 
-            // Calculate position and round to nearest pixel for crisp rendering
+            // Calculate position: sprite's bottom should align with player's center
+            // This puts the character's "feet" at the player collision point
             const drawX = Math.round(screen.x - size/2);
-            const drawY = Math.round(screen.y - size/2);
+            const drawY = Math.round(screen.y - size + this.radius);  // Align bottom of sprite with player
 
             // Flip sprite based on facing direction (left/right)
             const flipX = this.facingAngle > Math.PI/2 || this.facingAngle < -Math.PI/2;
