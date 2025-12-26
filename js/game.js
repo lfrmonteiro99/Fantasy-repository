@@ -300,8 +300,13 @@ class NarutoActionRPG {
     }
 
     useAbility(slot) {
-        if (!this.player) return;
-        this.player.useAbility(slot, this);
+        if (!this.player) {
+            console.log('No player');
+            return;
+        }
+        console.log('Using ability slot:', slot, 'Player abilities:', this.player.equippedAbilities);
+        const result = this.player.useAbility(slot, this);
+        console.log('Ability cast result:', result);
     }
 
     performMeleeAttack() {

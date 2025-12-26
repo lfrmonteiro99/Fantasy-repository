@@ -257,12 +257,19 @@ class Player extends Combatant {
 
     // Use ability
     useAbility(abilitySlot, game) {
+        console.log('Player.useAbility called, slot:', abilitySlot, 'equipped:', this.equippedAbilities);
+
         if (abilitySlot < 0 || abilitySlot >= this.equippedAbilities.length) {
+            console.log('Invalid slot');
             return false;
         }
 
         const abilityId = this.equippedAbilities[abilitySlot];
-        if (!abilityId) return false;
+        console.log('Ability ID:', abilityId);
+        if (!abilityId) {
+            console.log('No ability in slot');
+            return false;
+        }
 
         // Find target (nearest enemy)
         let target = null;
@@ -277,8 +284,11 @@ class Player extends Combatant {
                 }
             }
         }
+        console.log('Target:', target);
 
-        return AbilitySystem.cast(abilityId, this, target, game);
+        const result = AbilitySystem.cast(abilityId, this, target, game);
+        console.log('AbilitySystem.cast returned:', result);
+        return result;
     }
 
     // Draw player
