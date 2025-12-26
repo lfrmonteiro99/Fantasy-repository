@@ -257,17 +257,16 @@ class Player extends Combatant {
 
     // Use ability
     useAbility(abilitySlot, game) {
-        console.log('Player.useAbility called, slot:', abilitySlot, 'equipped:', this.equippedAbilities);
-
         if (abilitySlot < 0 || abilitySlot >= this.equippedAbilities.length) {
-            console.log('Invalid slot');
             return false;
         }
 
         const abilityId = this.equippedAbilities[abilitySlot];
-        console.log('Ability ID:', abilityId);
-        if (!abilityId) {
-            console.log('No ability in slot');
+        if (!abilityId) return false;
+
+        const ability = AbilitySystem.getAbility(abilityId);
+        if (!ability) {
+            game.showNotification('Ability not found!', 2000);
             return false;
         }
 
@@ -284,10 +283,21 @@ class Player extends Combatant {
                 }
             }
         }
-        console.log('Target:', target);
 
         const result = AbilitySystem.cast(abilityId, this, target, game);
-        console.log('AbilitySystem.cast returned:', result);
+
+        if (!result) {
+            // Show why it failed
+            if (this.chakra < ability.chakraCost) {
+                game.showNotification('Not enough chakra!', 1500);
+            } else {
+                const cooldown = this.abilityCooldowns[abilityId] || 0;
+                if (cooldown > 0) {
+                    game.showNotification(`Cooldown: ${Math.ceil(cooldown)}s`, 1000);
+                }
+            }
+        }
+
         return result;
     }
 
