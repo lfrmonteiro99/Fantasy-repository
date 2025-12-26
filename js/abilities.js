@@ -427,7 +427,7 @@ const AbilitySystem = {
                     const distance = Utils.distance(proj.x, proj.y, enemy.x, enemy.y);
                     if (distance <= proj.radius + enemy.radius) {
                         // Hit enemy - use proper damage system
-                        EnemySystem.takeDamage(enemy, proj.damage, game);
+                        enemy.takeDamage(proj.damage, game);
                         game.showDamageNumber(enemy.x, enemy.y, proj.damage, 'player-damage');
                         AudioManager.play('enemy_hit');
 
@@ -445,7 +445,7 @@ const AbilitySystem = {
                     const distance = Utils.distance(proj.x, proj.y, game.player.x, game.player.y);
                     if (distance <= proj.radius + game.player.radius) {
                         // Hit player
-                        PlayerSystem.takeDamage(game.player, proj.damage, game);
+                        game.player.takeDamage(proj.damage, game);
                         game.showDamageNumber(game.player.x, game.player.y, proj.damage, 'enemy-damage');
                         AudioManager.play('naruto_hurt');
 
@@ -489,7 +489,7 @@ const AbilitySystem = {
             if (nearestDistance <= clone.radius + nearestEnemy.radius + 30) {
                 clone.attackCooldown -= dt;
                 if (clone.attackCooldown <= 0) {
-                    EnemySystem.takeDamage(nearestEnemy, clone.damage, game);
+                    nearestEnemy.takeDamage(clone.damage, game);
                     game.showDamageNumber(nearestEnemy.x, nearestEnemy.y, clone.damage, 'player-damage');
                     AudioManager.play('enemy_hit');
                     clone.attackCooldown = clone.attackRate;

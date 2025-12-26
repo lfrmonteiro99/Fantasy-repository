@@ -301,7 +301,7 @@ class NarutoActionRPG {
 
     useAbility(slot) {
         if (!this.player) return;
-        PlayerSystem.useAbility(this.player, slot, this);
+        this.player.useAbility(slot, this);
     }
 
     performMeleeAttack() {
@@ -338,7 +338,7 @@ class NarutoActionRPG {
             }
 
             damage = Utils.calculateDamage(damage);
-            EnemySystem.takeDamage(nearestEnemy, damage, this);
+            nearestEnemy.takeDamage(damage, this);
 
             this.showDamageNumber(nearestEnemy.x, nearestEnemy.y, damage, 'player-damage');
             AudioManager.play('naruto_attack');
@@ -598,7 +598,7 @@ class NarutoActionRPG {
                 const xpReward = 300;
 
                 this.player.gold += goldReward;
-                PlayerSystem.gainXP(this.player, xpReward, this);
+                this.player.gainXP(xpReward, this);
 
                 this.showNotification(`Mission Complete!\n+${goldReward} Gold\n+${xpReward} XP`, 4000);
 
