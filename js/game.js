@@ -61,6 +61,9 @@ class NarutoActionRPG {
         // Set canvas size
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.resizeCanvas(), 100);
+        });
 
         // Initialize UI system
         UISystem.init(this);
@@ -85,8 +88,17 @@ class NarutoActionRPG {
     }
 
     resizeCanvas() {
+        // Set CSS custom property for viewport height (fixes mobile browser chrome)
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+        // Set canvas size
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+
+        // Force layout recalculation
+        document.body.style.height = `${window.innerHeight}px`;
+        document.getElementById('game-container').style.height = `${window.innerHeight}px`;
     }
 
     setupInputHandlers() {
