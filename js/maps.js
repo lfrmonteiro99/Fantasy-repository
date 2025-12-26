@@ -209,11 +209,19 @@ const MapSystem = {
             if (dist <= this.currentMap.exitZone.radius) {
                 // Allow exit if no enemies (or in hub)
                 if (this.currentMap.type === 'hub' || !game.enemies || game.enemies.filter(e => !e.isDead).length === 0) {
-                    game.showInteractPrompt('Press SPACE to return to village');
+                    const isMobile = window.isMobileDevice || false;
+                    const message = isMobile
+                        ? 'TAP HERE to return to village'
+                        : 'Press SPACE to return to village';
+                    game.showInteractPrompt(message);
 
-                    if (game.input && game.input.space) {
+                    const shouldExit = (game.input && game.input.space) ||
+                                      (game.lastTapInExitZone);
+
+                    if (shouldExit) {
                         this.loadMap(this.currentMap.exitZone.targetMap, game);
                         game.input.space = false;
+                        game.lastTapInExitZone = false;
                     }
                 }
             }
@@ -268,13 +276,21 @@ const MapSystem = {
             if (dist <= npc.interactRange) {
                 this.activeInteractNPC = npc;
 
-                // Show interact prompt
-                game.showInteractPrompt(`Press SPACE to talk to ${npc.name}`);
+                // Show interact prompt with mobile-friendly message
+                const isMobile = window.isMobileDevice || false;
+                const message = isMobile
+                    ? `TAP to talk to ${npc.name}`
+                    : `Press SPACE to talk to ${npc.name}`;
+                game.showInteractPrompt(message);
 
-                // Handle interaction
-                if (game.input && game.input.space) {
+                // Handle interaction - SPACE key OR if player tapped close to NPC
+                const shouldInteract = (game.input && game.input.space) ||
+                                      (game.lastTapNearNPC === npc);
+
+                if (shouldInteract) {
                     this.interactWithNPC(npc, game);
                     game.input.space = false;
+                    game.lastTapNearNPC = null;
                 }
 
                 break;

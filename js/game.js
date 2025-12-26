@@ -51,6 +51,10 @@ class NarutoActionRPG {
         // Flags
         this.paused = false;
         this.showDebug = false;
+
+        // Mobile interaction tracking
+        this.lastTapNearNPC = null;
+        this.lastTapInExitZone = false;
     }
 
     async init() {
@@ -234,8 +238,31 @@ class NarutoActionRPG {
             // Convert to world coordinates
             const worldPos = Utils.screenToWorld(pos.x, pos.y, this.camera);
 
-            // Check if clicking on UI elements (ability buttons, etc.)
-            // For now, just set move target
+            // Check if tapped near active NPC (for mobile interaction)
+            if (MapSystem.activeInteractNPC && this.player) {
+                const npc = MapSystem.activeInteractNPC;
+                const distToNPC = Utils.distance(worldPos.x, worldPos.y, npc.x, npc.y);
+
+                if (distToNPC <= npc.radius + 50) {
+                    // Tapped on or near the NPC
+                    this.lastTapNearNPC = npc;
+                    return; // Don't set move target
+                }
+            }
+
+            // Check if tapped in exit zone
+            if (this.currentMap && this.currentMap.exitZone && this.player) {
+                const exitZone = this.currentMap.exitZone;
+                const distToExit = Utils.distance(worldPos.x, worldPos.y, exitZone.x, exitZone.y);
+
+                if (distToExit <= exitZone.radius) {
+                    // Tapped in exit zone
+                    this.lastTapInExitZone = true;
+                    return; // Don't set move target
+                }
+            }
+
+            // Set move target
             if (this.player) {
                 this.player.targetX = worldPos.x;
                 this.player.targetY = worldPos.y;
