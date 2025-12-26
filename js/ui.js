@@ -527,5 +527,119 @@ const UISystem = {
         if (progressBar) {
             progressBar.style.width = percent + '%';
         }
+    },
+
+    // Show mission select modal
+    showMissionSelectModal(mission, game) {
+        document.getElementById('mission-title').textContent = mission.name;
+        document.getElementById('mission-description').textContent = mission.description;
+        document.getElementById('mission-difficulty').textContent = `Difficulty: ${mission.difficulty}`;
+
+        const modal = this.elements.missionSelectModal;
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+
+        // Setup buttons
+        const acceptBtn = document.getElementById('accept-mission-btn');
+        const cancelBtn = document.getElementById('cancel-mission-btn');
+
+        const acceptHandler = () => {
+            game.currentMission = mission.id;
+            MapSystem.loadMap('land_of_waves', game);
+            this.hideModal('mission-select-modal');
+            acceptBtn.removeEventListener('click', acceptHandler);
+            cancelBtn.removeEventListener('click', cancelHandler);
+        };
+
+        const cancelHandler = () => {
+            this.hideModal('mission-select-modal');
+            acceptBtn.removeEventListener('click', acceptHandler);
+            cancelBtn.removeEventListener('click', cancelHandler);
+        };
+
+        acceptBtn.addEventListener('click', acceptHandler);
+        cancelBtn.addEventListener('click', cancelHandler);
+    },
+
+    // Show shop modal
+    showShopModal(npc, game) {
+        document.getElementById('shop-title').textContent = npc.name;
+        document.getElementById('shop-player-gold').textContent = game.player.gold;
+        document.getElementById('shop-items').innerHTML = '<p>Shop system coming soon!</p>';
+
+        const modal = this.elements.shopModal;
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+
+        const closeBtn = document.getElementById('close-shop-btn');
+        const closeHandler = () => {
+            this.hideModal('shop-modal');
+            closeBtn.removeEventListener('click', closeHandler);
+        };
+        closeBtn.addEventListener('click', closeHandler);
+    },
+
+    // Show death modal
+    showDeathModal(game) {
+        const modal = this.elements.deathModal;
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+
+        const respawnBtn = document.getElementById('respawn-btn');
+        const menuBtn = document.getElementById('death-menu-btn');
+
+        const respawnHandler = () => {
+            // Respawn in hub
+            game.player.isDead = false;
+            game.player.health = game.player.maxHealth;
+            game.player.chakra = game.player.maxChakra;
+            MapSystem.loadMap('konoha_hub', game);
+            this.hideModal('death-modal');
+            respawnBtn.removeEventListener('click', respawnHandler);
+            menuBtn.removeEventListener('click', menuHandler);
+        };
+
+        const menuHandler = () => {
+            game.returnToMainMenu();
+            this.hideModal('death-modal');
+            respawnBtn.removeEventListener('click', respawnHandler);
+            menuBtn.removeEventListener('click', menuHandler);
+        };
+
+        respawnBtn.addEventListener('click', respawnHandler);
+        menuBtn.addEventListener('click', menuHandler);
+    },
+
+    // Show mission complete modal
+    showMissionCompleteModal(goldReward, xpReward, game) {
+        const rewardsDiv = document.getElementById('mission-rewards');
+        rewardsDiv.innerHTML = `
+            <p style="color: var(--naruto-gold); font-size: 1.2em;">+${goldReward} Gold</p>
+            <p style="color: var(--naruto-green); font-size: 1.2em;">+${xpReward} XP</p>
+        `;
+
+        const modal = this.elements.missionCompleteModal;
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+
+        const returnBtn = document.getElementById('return-to-village-btn');
+        const stayBtn = document.getElementById('stay-on-map-btn');
+
+        const returnHandler = () => {
+            MapSystem.loadMap('konoha_hub', game);
+            this.hideModal('mission-complete-modal');
+            returnBtn.removeEventListener('click', returnHandler);
+            stayBtn.removeEventListener('click', stayHandler);
+        };
+
+        const stayHandler = () => {
+            this.addEventLog('You can return via the exit zone', 'info');
+            this.hideModal('mission-complete-modal');
+            returnBtn.removeEventListener('click', returnHandler);
+            stayBtn.removeEventListener('click', stayHandler);
+        };
+
+        returnBtn.addEventListener('click', returnHandler);
+        stayBtn.addEventListener('click', stayHandler);
     }
 };

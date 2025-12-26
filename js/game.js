@@ -567,16 +567,7 @@ class NarutoActionRPG {
 
     onPlayerDeath() {
         setTimeout(() => {
-            if (confirm('You died! Return to village?')) {
-                // Respawn in hub
-                this.player.isDead = false;
-                this.player.health = this.player.maxHealth;
-                this.player.chakra = this.player.maxChakra;
-
-                MapSystem.loadMap('konoha_hub', this);
-            } else {
-                this.returnToMainMenu();
-            }
+            UISystem.showDeathModal(this);
         }, 1000);
     }
 
@@ -600,17 +591,10 @@ class NarutoActionRPG {
                 this.player.gold += goldReward;
                 this.player.gainXP(xpReward, this);
 
-                this.showNotification(`Mission Complete!\n+${goldReward} Gold\n+${xpReward} XP`, 4000);
-
-                // Return to hub after showing rewards
+                // Show mission complete modal
                 setTimeout(() => {
-                    if (confirm('Mission Complete! Return to village?')) {
-                        MapSystem.loadMap('konoha_hub', this);
-                    } else {
-                        // Stay on map but show exit zone is available
-                        this.showNotification('You can return to the village at the exit zone', 3000);
-                    }
-                }, 2000);
+                    UISystem.showMissionCompleteModal(goldReward, xpReward, this);
+                }, 1000);
             }, 1500);
         }, 500);
     }
@@ -637,18 +621,14 @@ class NarutoActionRPG {
     }
 
     openShop(npc) {
-        alert(`Shop: ${npc.name}\n\nShop system coming soon!`);
+        UISystem.showShopModal(npc, this);
     }
 
     openMissionSelect(npc) {
         if (!npc.missions || npc.missions.length === 0) return;
 
         const mission = npc.missions[0]; // Land of Waves
-
-        if (confirm(`${mission.name}\n${mission.description}\n\nDifficulty: ${mission.difficulty}\n\nAccept mission?`)) {
-            this.currentMission = mission.id;
-            MapSystem.loadMap('land_of_waves', this);
-        }
+        UISystem.showMissionSelectModal(mission, this);
     }
 }
 
