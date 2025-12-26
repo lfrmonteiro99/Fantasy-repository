@@ -540,6 +540,47 @@ body {
     display: flex;
 }
 
+/* Melee Attack Button */
+.melee-container {
+    position: absolute;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.melee-btn {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--naruto-orange) 0%, var(--naruto-dark-orange) 100%);
+    border: 3px solid var(--naruto-gold);
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.melee-btn:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.melee-icon {
+    font-size: 2em;
+    margin-bottom: 2px;
+}
+
+.melee-name {
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--naruto-white);
+    text-transform: uppercase;
+}
+
 /* Mobile Joystick */
 .mobile-only {
     display: block;

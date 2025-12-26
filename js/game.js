@@ -164,6 +164,17 @@ class NarutoActionRPG {
             });
         });
 
+        // Melee attack button (mobile)
+        const meleeBtn = document.getElementById('melee-attack-btn');
+        if (meleeBtn) {
+            meleeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.state === 'playing' && !this.paused) {
+                    this.performMeleeAttack();
+                }
+            });
+        }
+
         // Joystick setup
         this.setupJoystick();
     }
@@ -291,6 +302,73 @@ class NarutoActionRPG {
     useAbility(slot) {
         if (!this.player) return;
         PlayerSystem.useAbility(this.player, slot, this);
+    }
+
+    performMeleeAttack() {
+        if (!this.player || this.player.isDead) return;
+
+        // Find nearest enemy in melee range
+        const meleeRange = 80;
+        let nearestEnemy = null;
+        let nearestDist = Infinity;
+
+        if (this.enemies) {
+            for (let enemy of this.enemies) {
+                if (enemy.isDead) continue;
+                const dist = Utils.distance(this.player.x, this.player.y, enemy.x, enemy.y);
+                if (dist < nearestDist && dist <= meleeRange) {
+                    nearestDist = dist;
+                    nearestEnemy = enemy;
+                }
+            }
+        }
+
+        if (nearestEnemy) {
+            // Calculate damage
+            const stats = ItemSystem.getTotalStats(this.player);
+            let damage = stats.attack;
+
+            // Apply damage boost from Nine-Tails
+            if (this.player.statusEffects) {
+                for (let effect of this.player.statusEffects) {
+                    if (effect.type === 'nine_tails' && effect.value.damageBoost) {
+                        damage *= effect.value.damageBoost;
+                    }
+                }
+            }
+
+            damage = Utils.calculateDamage(damage);
+            EnemySystem.takeDamage(nearestEnemy, damage, this);
+
+            this.showDamageNumber(nearestEnemy.x, nearestEnemy.y, damage, 'player-damage');
+            AudioManager.play('naruto_attack');
+
+            // Face enemy
+            this.player.facingAngle = Utils.angleBetween(this.player.x, this.player.y, nearestEnemy.x, nearestEnemy.y);
+
+            // Visual feedback
+            this.createMeleeAttackEffect(nearestEnemy);
+        }
+    }
+
+    createMeleeAttackEffect(enemy) {
+        // Create particles for melee hit
+        if (!this.particles) this.particles = [];
+
+        for (let i = 0; i < 10; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Utils.randomFloat(50, 150);
+            const particle = Utils.createParticle(
+                enemy.x,
+                enemy.y,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '#FFD700',
+                Utils.randomFloat(3, 6),
+                0.3
+            );
+            this.particles.push(particle);
+        }
     }
 
     startGame(characterId) {
