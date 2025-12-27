@@ -19,8 +19,20 @@ const MapSystem = {
             playerSpawn: { x: 260, y: 260 }, // Center of map, will adjust to walkable area
             npcs: [],
             decorations: [],
-            // Mission Log building - will be populated after analyzing tallest building
-            interactionZones: []
+            // Mission Log - bottom gate
+            interactionZones: [
+                {
+                    id: 'mission_log',
+                    name: 'Mission Log',
+                    type: 'mission_log',
+                    x: 220,
+                    y: 460,
+                    width: 80,
+                    height: 50,
+                    interactRange: 30,
+                    dialogue: ['Mission Log', 'View available missions']
+                }
+            ]
         },
 
         'land_of_waves': {
@@ -248,6 +260,11 @@ const MapSystem = {
             this.updateNPCInteractions(game);
         }
 
+        // Check interaction zones
+        if (this.currentMap.interactionZones) {
+            this.updateInteractionZones(game);
+        }
+
         // Check exit zone
         if (this.currentMap.exitZone && game.player) {
             const dist = Utils.distance(
@@ -349,6 +366,51 @@ const MapSystem = {
         }
     },
 
+    // Update interaction zones
+    updateInteractionZones(game) {
+        if (!game.player) return;
+
+        for (let zone of this.currentMap.interactionZones) {
+            // Check if player is inside or near the zone
+            const playerInZone =
+                game.player.x >= zone.x - zone.interactRange &&
+                game.player.x <= zone.x + zone.width + zone.interactRange &&
+                game.player.y >= zone.y - zone.interactRange &&
+                game.player.y <= zone.y + zone.height + zone.interactRange;
+
+            if (playerInZone) {
+                // Show interact prompt
+                const isMobile = window.isMobileDevice || false;
+                const message = isMobile
+                    ? `TAP to access ${zone.name}`
+                    : `Press SPACE to access ${zone.name}`;
+                game.showInteractPrompt(message);
+
+                // Handle interaction
+                const shouldInteract = (game.input && game.input.space) ||
+                                      (game.lastTapInZone === zone);
+
+                if (shouldInteract) {
+                    this.interactWithZone(zone, game);
+                    if (game.input) game.input.space = false;
+                    game.lastTapInZone = null;
+                }
+
+                break;
+            }
+        }
+    },
+
+    // Interact with zone
+    interactWithZone(zone, game) {
+        if (zone.type === 'mission_log') {
+            // Open mission select
+            game.openMissionSelect();
+        }
+
+        AudioManager.playUI('click');
+    },
+
     // Interact with NPC
     interactWithNPC(npc, game) {
         if (npc.type === 'shop') {
@@ -410,6 +472,13 @@ const MapSystem = {
         if (this.currentMap.npcs) {
             for (let npc of this.currentMap.npcs) {
                 this.drawNPC(ctx, npc, camera, game);
+            }
+        }
+
+        // Draw interaction zones
+        if (this.currentMap.interactionZones) {
+            for (let zone of this.currentMap.interactionZones) {
+                this.drawInteractionZone(ctx, zone, camera, game);
             }
         }
 
@@ -493,6 +562,32 @@ const MapSystem = {
         }
 
         ctx.restore();
+    },
+
+    // Draw interaction zone
+    drawInteractionZone(ctx, zone, camera, game) {
+        if (!game.player) return;
+
+        const screen = Utils.worldToScreen(zone.x, zone.y, camera);
+
+        // Check if player is near
+        const playerInZone =
+            game.player.x >= zone.x - zone.interactRange &&
+            game.player.x <= zone.x + zone.width + zone.interactRange &&
+            game.player.y >= zone.y - zone.interactRange &&
+            game.player.y <= zone.y + zone.height + zone.interactRange;
+
+        if (playerInZone) {
+            // Draw highlight box
+            ctx.save();
+            const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+            ctx.globalAlpha = pulse * 0.5;
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(screen.x, screen.y, zone.width, zone.height);
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
     },
 
     // Draw exit zone
