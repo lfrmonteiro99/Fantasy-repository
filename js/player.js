@@ -334,8 +334,14 @@ class Player extends Combatant {
 
         // Keep player in bounds
         if (game.currentMap) {
-            this.x = Utils.clamp(this.x, this.radius, game.currentMap.width - this.radius);
-            this.y = Utils.clamp(this.y, this.radius, game.currentMap.height - this.radius);
+            // For fullscreen hub maps, use canvas size (scaled). For others, use map size
+            if (game.currentMap.type === 'hub' && game.currentMap.backgroundImage) {
+                this.x = Utils.clamp(this.x, this.radius, game.canvas.width - this.radius);
+                this.y = Utils.clamp(this.y, this.radius, game.canvas.height - this.radius);
+            } else {
+                this.x = Utils.clamp(this.x, this.radius, game.currentMap.width - this.radius);
+                this.y = Utils.clamp(this.y, this.radius, game.currentMap.height - this.radius);
+            }
         }
     }
 
