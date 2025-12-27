@@ -134,99 +134,94 @@ class EnvironmentManager {
     createSampleVillage(centerX = 400, centerY = 300) {
         this.clear();
 
-        // STEP 1: Define the + shaped road network
+        // STEP 1: Roads are already built (+ shaped)
         const roadWidth = 120;
         const roadTop = centerY - roadWidth / 2;      // Y = 240
         const roadBottom = centerY + roadWidth / 2;   // Y = 360
         const roadLeft = centerX - roadWidth / 2;     // X = 340
         const roadRight = centerX + roadWidth / 2;    // X = 460
 
-        // STEP 2: Position buildings FAR from center, spread along roads
-        // Each building way out from center for clear visual separation
+        // STEP 2: Build NEW buildings alongside the roads
+        // Forget all previous positions - create natural village layout
 
-        // MISSION LOG - Far RIGHT on horizontal road
-        const missionLogW = 559 * 0.9;
-        const missionLogH = 137 * 0.9;
-        const missionLogX = centerX + 300;  // Far right
-        const missionLogY = roadBottom;     // South of road
-        this.addObject('shop_large', missionLogX, missionLogY, 0.9, 'midground');
+        // === HORIZONTAL ROAD - NORTH SIDE ===
+        // Buildings positioned ABOVE the road (Y ends at roadTop)
 
-        // SHOP - Far LEFT on horizontal road
-        const shopW = 213;
-        const shopH = 137;
-        const shopX = centerX - 500;        // Far left
-        const shopY = roadTop - shopH;      // North of road
-        this.addObject('house_medium', shopX, shopY, 1, 'midground');
+        // Shop - left side of horizontal road, north
+        const shop1 = this.addObject('house_medium', 80, roadTop - 137, 1, 'midground');
 
-        // INN - Far DOWN on vertical road
-        const innW = 213 * 0.9;
-        const innH = 137 * 0.9;
-        const innX = roadLeft - innW;       // West of road
-        const innY = centerY + 200;         // Far down
-        this.addObject('house_medium', innX, innY, 0.9, 'midground');
+        // Mission Log - center-right of horizontal road, north
+        const missionLog = this.addObject('shop_large', 600, roadTop - 137, 1, 'midground');
 
-        // TRAINING - Far UP on vertical road
-        const trainingW = 315;
-        const trainingH = 137;
-        const trainingX = roadRight;        // East of road
-        const trainingY = centerY - 300;    // Far up
-        this.addObject('house_small_1', trainingX, trainingY, 1, 'midground');
+        // Small house - far right of horizontal road, north
+        const house1 = this.addObject('house_small_1', 950, roadTop - 137, 0.8, 'midground');
 
-        // Decorative buildings in far corners
-        this.addObject('house_small_2', centerX - 600, centerY - 400, 0.8, 'background');
-        this.addObject('bg_building_large', centerX + 400, centerY + 200, 0.6, 'background');
+        // === HORIZONTAL ROAD - SOUTH SIDE ===
+        // Buildings positioned BELOW the road (Y starts at roadBottom)
 
-        // Props along roads
-        this.addObject('sign_post', roadRight - 30, centerY - 100, 1, 'foreground');
-        this.addObject('wooden_box_1', roadLeft + 10, centerY + 50, 1, 'foreground');
-        this.addObject('barrel_1', centerX - 80, roadTop + 10, 1, 'foreground');
-        this.addObject('barrel_2', centerX + 80, roadBottom - 40, 1, 'foreground');
-        this.addObject('bench', roadRight + 30, centerY + 100, 1, 'foreground');
-        this.addObject('stone_pillar', centerX, centerY, 1, 'foreground');
+        // Inn - left side of horizontal road, south
+        const inn = this.addObject('house_medium', 120, roadBottom, 1, 'midground');
 
-        // Add building triggers matching exact sprite positions
+        // Large house - center of horizontal road, south
+        const house2 = this.addObject('house_small_2', 550, roadBottom, 0.9, 'midground');
+
+        // === VERTICAL ROAD - WEST SIDE ===
+        // Buildings positioned LEFT of the road (X ends at roadLeft)
+
+        // Training - below center on vertical road, west
+        const training = this.addObject('house_small_1', roadLeft - 315, 450, 1, 'midground');
+
+        // Small house - above center on vertical road, west
+        const house3 = this.addObject('house_medium', roadLeft - 213, 50, 0.8, 'midground');
+
+        // === VERTICAL ROAD - EAST SIDE ===
+        // Buildings positioned RIGHT of the road (X starts at roadRight)
+
+        // Medium house - below center on vertical road, east
+        const house4 = this.addObject('house_medium', roadRight, 480, 0.9, 'midground');
+
+        // Small house - above center on vertical road, east
+        const house5 = this.addObject('house_small_2', roadRight, 30, 0.7, 'background');
+
+        // === DECORATIVE PROPS ===
+        this.addObject('sign_post', roadRight + 20, 200, 1, 'foreground');
+        this.addObject('wooden_box_1', roadLeft - 80, 350, 1, 'foreground');
+        this.addObject('barrel_1', 250, roadTop + 20, 1, 'foreground');
+        this.addObject('barrel_2', 650, roadBottom - 35, 1, 'foreground');
+        this.addObject('bench', roadRight + 25, 420, 1, 'foreground');
+        this.addObject('market_stall', 850, roadTop + 10, 1, 'foreground');
+
+        // === BUILDING TRIGGERS ===
         if (typeof Roads !== 'undefined') {
-            // Mission Log - Far RIGHT, south of horizontal road, entrance faces UP (top)
+            // Shop - north side of horizontal road, entrance faces DOWN (bottom)
             Roads.addBuildingTrigger(
-                missionLogX,
-                missionLogY,
-                missionLogW,
-                missionLogH,
-                'mission_log',
-                { entranceSide: 'top' }
-            );
-
-            // Shop - Far LEFT, north of horizontal road, entrance faces DOWN (bottom)
-            Roads.addBuildingTrigger(
-                shopX,
-                shopY,
-                shopW,
-                shopH,
+                80, roadTop - 137, 213, 137,
                 'shop',
                 { entranceSide: 'bottom' }
             );
 
-            // Inn - Far DOWN, west of vertical road, entrance faces RIGHT (right)
+            // Mission Log - north side of horizontal road, entrance faces DOWN (bottom)
             Roads.addBuildingTrigger(
-                innX,
-                innY,
-                innW,
-                innH,
+                600, roadTop - 137, 559, 137,
+                'mission_log',
+                { entranceSide: 'bottom' }
+            );
+
+            // Inn - south side of horizontal road, entrance faces UP (top)
+            Roads.addBuildingTrigger(
+                120, roadBottom, 213, 137,
                 'inn',
+                { entranceSide: 'top' }
+            );
+
+            // Training - west side of vertical road, entrance faces RIGHT (right)
+            Roads.addBuildingTrigger(
+                roadLeft - 315, 450, 315, 137,
+                'training',
                 { entranceSide: 'right' }
             );
 
-            // Training - Far UP, east of vertical road, entrance faces LEFT (left)
-            Roads.addBuildingTrigger(
-                trainingX,
-                trainingY,
-                trainingW,
-                trainingH,
-                'training',
-                { entranceSide: 'left' }
-            );
-
-            console.log('🏘️ Konoha village created with accessible interactive buildings');
+            console.log('🏘️ NEW Konoha village layout created alongside + shaped roads');
         } else {
             console.log('🏘️ Konoha village created alongside roads');
         }
