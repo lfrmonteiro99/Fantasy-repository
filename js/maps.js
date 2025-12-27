@@ -326,6 +326,9 @@ const MapSystem = {
 
     // Check if a position is walkable
     isWalkable(x, y) {
+        // TEMPORARY: Disable all collision for testing
+        return true;
+
         if (!this.currentMap) return true;
 
         const mapId = this.currentMap.id;
