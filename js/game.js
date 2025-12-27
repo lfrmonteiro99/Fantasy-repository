@@ -75,6 +75,9 @@ class NarutoActionRPG {
         // Setup input handlers
         this.setupInputHandlers();
 
+        // Load environment objects
+        await Environment.loadSprites();
+
         // Simulate loading
         for (let i = 0; i <= 100; i += 20) {
             UISystem.updateLoadingProgress(i);
@@ -410,6 +413,9 @@ class NarutoActionRPG {
         // Load starting map
         MapSystem.loadMap('konoha_hub', this);
 
+        // Create Konoha village environment
+        Environment.createSampleVillage(this.player.x, this.player.y);
+
         // Start game
         this.state = 'playing';
         UISystem.showScreen('game');
@@ -487,8 +493,14 @@ class NarutoActionRPG {
             // Draw map
             MapSystem.draw(this.ctx, this);
 
+            // Draw environment background layer (far background buildings)
+            Environment.drawLayer(this.ctx, this.camera, 'background');
+
             // Draw item drops
             ItemSystem.drawItemDrops(this.ctx, this);
+
+            // Draw environment midground layer (main buildings)
+            Environment.drawLayer(this.ctx, this.camera, 'midground');
 
             // Draw enemies
             if (this.enemies) {
@@ -501,6 +513,9 @@ class NarutoActionRPG {
             if (this.player) {
                 this.player.draw(this.ctx, this.camera);
             }
+
+            // Draw environment foreground layer (props, decorations)
+            Environment.drawLayer(this.ctx, this.camera, 'foreground');
 
             // Draw projectiles
             AbilitySystem.drawProjectiles(this.ctx, this);

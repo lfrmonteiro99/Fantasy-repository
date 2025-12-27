@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konoha Objects Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #FF6B1A;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .objects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .object-card {
+            background: #2a2a2a;
+            border: 2px solid #FF6B1A;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .object-card h4 {
+            margin: 5px 0;
+            color: #FF6B1A;
+            font-size: 12px;
+        }
+        .object-card canvas {
+            background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 20px 20px;
+            border: 1px solid #444;
+            margin: 10px 0;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .object-card .dimensions {
+            font-size: 11px;
+            color: #888;
+        }
+        .category {
+            margin-top: 30px;
+        }
+        .category h2 {
+            color: #FF6B1A;
+            border-bottom: 2px solid #FF6B1A;
+            padding-bottom: 10px;
+        }
+        #fullSheet {
+            max-width: 100%;
+            border: 2px solid #FF6B1A;
+            margin-top: 10px;
+            background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 20px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏘️ Konoha Objects Sprite Sheet</h1>
+
+        <div class="info">
+            <h3>Environment Objects Info</h3>
+            <p><strong>File:</strong> assets/sprites/environment/konoha_objects.png</p>
+            <p><strong>Dimensions:</strong> 944 x 895 pixels</p>
+            <p><strong>Objects:</strong> Buildings, props, decorations for Konoha Village</p>
+            <p><strong>Background:</strong> Green removed, transparent PNG</p>
+        </div>
+
+        <div class="category">
+            <h2>🏠 Buildings</h2>
+            <div id="buildings-grid" class="objects-grid"></div>
+        </div>
+
+        <div class="category">
+            <h2>📦 Props & Extras</h2>
+            <div id="props-grid" class="objects-grid"></div>
+        </div>
+
+        <div class="category">
+            <h2>🌄 Background Elements</h2>
+            <div id="background-grid" class="objects-grid"></div>
+        </div>
+
+        <div class="info" style="margin-top: 30px;">
+            <h3>Full Sprite Sheet</h3>
+            <img id="fullSheet" src="assets/sprites/environment/konoha_objects.png">
+        </div>
+    </div>
+
+    <script>
+        const img = new Image();
+        img.src = 'assets/sprites/environment/konoha_objects.png';
+
+        // Object templates from environment.js
+        const objects = {
+            buildings: {
+                'house_small_1': { sx: 14, sy: 420, sWidth: 315, sHeight: 137 },
+                'house_small_2': { sx: 367, sy: 420, sWidth: 375, sHeight: 137 },
+                'shop_large': { sx: 14, sy: 574, sWidth: 559, sHeight: 137 },
+                'house_medium': { sx: 625, sy: 574, sWidth: 213, sHeight: 137 }
+            },
+            props: {
+                'sign_post': { sx: 405, sy: 88, sWidth: 57, sHeight: 74 },
+                'wooden_box_1': { sx: 564, sy: 88, sWidth: 75, sHeight: 43 },
+                'wooden_box_2': { sx: 564, sy: 133, sWidth: 75, sHeight: 43 },
+                'fence_section': { sx: 637, sy: 88, sWidth: 75, sHeight: 43 },
+                'barrel_1': { sx: 638, sy: 169, sWidth: 32, sHeight: 32 },
+                'barrel_2': { sx: 682, sy: 169, sWidth: 32, sHeight: 32 },
+                'market_stall': { sx: 410, sy: 191, sWidth: 105, sHeight: 75 },
+                'wooden_fence': { sx: 574, sy: 202, sWidth: 135, sHeight: 45 },
+                'stone_platform_1': { sx: 407, sy: 267, sWidth: 69, sHeight: 24 },
+                'stone_platform_2': { sx: 707, sy: 267, sWidth: 69, sHeight: 24 },
+                'wooden_platform': { sx: 477, sy: 267, sWidth: 137, sHeight: 32 },
+                'wall_section': { sx: 478, sy: 133, sWidth: 72, sHeight: 43 },
+                'building_sign_1': { sx: 792, sy: 93, sWidth: 59, sHeight: 43 },
+                'building_sign_2': { sx: 848, sy: 93, sWidth: 59, sHeight: 43 },
+                'stone_pillar': { sx: 792, sy: 148, sWidth: 32, sHeight: 75 },
+                'bench': { sx: 792, sy: 225, sWidth: 91, sHeight: 32 },
+                'gate_top': { sx: 792, sy: 265, sWidth: 91, sHeight: 43 }
+            },
+            background: {
+                'bg_building_large': { sx: 34, sy: 808, sWidth: 421, sHeight: 82 },
+                'bg_building_small': { sx: 467, sy: 808, sWidth: 109, sHeight: 82 },
+                'sky': { sx: 8, sy: 56, sWidth: 351, sHeight: 274 }
+            }
+        };
+
+        img.onload = () => {
+            renderCategory('buildings', 'buildings-grid');
+            renderCategory('props', 'props-grid');
+            renderCategory('background', 'background-grid');
+        };
+
+        function renderCategory(category, gridId) {
+            const grid = document.getElementById(gridId);
+            const categoryObjects = objects[category];
+
+            for (const [name, region] of Object.entries(categoryObjects)) {
+                const card = document.createElement('div');
+                card.className = 'object-card';
+
+                const title = document.createElement('h4');
+                title.textContent = name.replace(/_/g, ' ');
+                card.appendChild(title);
+
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(180 / region.sWidth, 120 / region.sHeight);
+                canvas.width = region.sWidth * scale;
+                canvas.height = region.sHeight * scale;
+
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(
+                    img,
+                    region.sx, region.sy, region.sWidth, region.sHeight,
+                    0, 0, canvas.width, canvas.height
+                );
+
+                card.appendChild(canvas);
+
+                const dims = document.createElement('div');
+                dims.className = 'dimensions';
+                dims.textContent = `${region.sWidth} × ${region.sHeight}px`;
+                card.appendChild(dims);
+
+                grid.appendChild(card);
+            }
+        }
+    </script>
+</body>
+</html>
