@@ -257,9 +257,27 @@ class Player extends Combatant {
             this.vx = Math.cos(this.joystickInput.angle) * moveSpeed * speedMultiplier;
             this.vy = Math.sin(this.joystickInput.angle) * moveSpeed * speedMultiplier;
 
+            // Store previous position for collision check
+            const prevX = this.x;
+            const prevY = this.y;
+
             // Move
             this.x += this.vx * dt;
             this.y += this.vy * dt;
+
+            // Check walkability/collision
+            if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y)) {
+                // Try sliding along walls
+                if (MapSystem.isWalkable(this.x, prevY)) {
+                    this.y = prevY; // Slide horizontally
+                } else if (MapSystem.isWalkable(prevX, this.y)) {
+                    this.x = prevX; // Slide vertically
+                } else {
+                    // Can't move, revert
+                    this.x = prevX;
+                    this.y = prevY;
+                }
+            }
 
             // Update target to current position (prevents click-to-move interference)
             this.targetX = this.x;
@@ -277,9 +295,27 @@ class Player extends Combatant {
                 this.vx = Math.cos(angle) * moveSpeed;
                 this.vy = Math.sin(angle) * moveSpeed;
 
+                // Store previous position for collision check
+                const prevX = this.x;
+                const prevY = this.y;
+
                 // Move
                 this.x += this.vx * dt;
                 this.y += this.vy * dt;
+
+                // Check walkability/collision
+                if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y)) {
+                    // Try sliding along walls
+                    if (MapSystem.isWalkable(this.x, prevY)) {
+                        this.y = prevY; // Slide horizontally
+                    } else if (MapSystem.isWalkable(prevX, this.y)) {
+                        this.x = prevX; // Slide vertically
+                    } else {
+                        // Can't move, revert
+                        this.x = prevX;
+                        this.y = prevY;
+                    }
+                }
 
                 // Stop if reached target
                 if (this.distanceTo({ x: this.targetX, y: this.targetY }) < moveSpeed * dt) {

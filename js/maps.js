@@ -7,55 +7,20 @@ const MapSystem = {
             id: 'konoha_hub',
             name: 'Hidden Leaf Village',
             type: 'hub',
-            width: 512,
-            height: 512,
+            width: 520,
+            height: 520,
             backgroundColor: '#87CEEB',
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
-            playerSpawn: { x: 256, y: 256 },
-            npcs: [
-                {
-                    id: 'shop_keeper',
-                    name: 'Weapon Shop Owner',
-                    x: 400,
-                    y: 400,
-                    radius: 25,
-                    color: '#8B4513',
-                    interactRange: 80,
-                    type: 'shop',
-                    dialogue: ['Welcome to my shop!', 'Take a look at my wares.'],
-                    shopItems: ['enhanced_kunai', 'enhanced_vest', 'enhanced_scroll']
-                },
-                {
-                    id: 'mission_board',
-                    name: 'Mission Board',
-                    x: 1200,
-                    y: 400,
-                    radius: 30,
-                    color: '#8B4513',
-                    interactRange: 80,
-                    type: 'missions',
-                    dialogue: ['Select a mission to begin!'],
-                    missions: [
-                        {
-                            id: 'land_of_waves',
-                            name: 'Mission: Land of Waves',
-                            description: 'Travel to the Land of Waves and protect the bridge builder',
-                            difficulty: 'C-Rank',
-                            unlocked: true
-                        }
-                    ]
-                }
-            ],
-            decorations: [
-                { type: 'building', x: 300, y: 300, width: 200, height: 200, color: '#D2691E' },
-                { type: 'building', x: 1100, y: 300, width: 200, height: 200, color: '#8B4513' },
-                { type: 'building', x: 300, y: 700, width: 150, height: 150, color: '#A0522D' },
-                { type: 'building', x: 1150, y: 700, width: 150, height: 150, color: '#A0522D' },
-                { type: 'tree', x: 600, y: 250, radius: 40, color: '#228B22' },
-                { type: 'tree', x: 1000, y: 250, radius: 40, color: '#228B22' },
-                { type: 'tree', x: 600, y: 950, radius: 40, color: '#228B22' },
-                { type: 'tree', x: 1000, y: 950, radius: 40, color: '#228B22' }
-            ]
+            // Crop coordinates for main village area only
+            imageCrop: { x: 0, y: 0, width: 520, height: 520 },
+            // Walkable path color (beige/tan streets)
+            walkableColor: { r: 200, g: 200, b: 170 }, // Approximate beige color
+            walkableColorTolerance: 50, // Color matching tolerance
+            playerSpawn: { x: 260, y: 260 }, // Center of map, will adjust to walkable area
+            npcs: [],
+            decorations: [],
+            // Mission Log building - will be populated after analyzing tallest building
+            interactionZones: []
         },
 
         'land_of_waves': {
@@ -130,6 +95,8 @@ const MapSystem = {
     hiddenMist: false,
     hiddenMistAlpha: 0,
     loadedImages: {},
+    collisionMaps: {}, // Pixel data for walkability checks
+    collisionCanvases: {}, // Hidden canvases for pixel reading
 
     // Load map
     loadMap(mapId, game) {
@@ -146,8 +113,20 @@ const MapSystem = {
         if (map.backgroundImage && !this.loadedImages[map.backgroundImage]) {
             const img = new Image();
             img.src = map.backgroundImage;
+            img.onload = () => {
+                console.log('🗺️ Map background loaded:', map.backgroundImage);
+                // Create collision map from image pixels
+                if (map.walkableColor) {
+                    this.createCollisionMap(mapId, img, map);
+                }
+            };
             this.loadedImages[map.backgroundImage] = img;
-            console.log('🗺️ Loading map background:', map.backgroundImage);
+        } else if (map.backgroundImage && map.walkableColor && !this.collisionMaps?.[mapId]) {
+            // Image already loaded, create collision map
+            const img = this.loadedImages[map.backgroundImage];
+            if (img.complete) {
+                this.createCollisionMap(mapId, img, map);
+            }
         }
 
         // Reset map state
@@ -185,6 +164,68 @@ const MapSystem = {
         }
 
         return true;
+    },
+
+    // Create collision map from image pixel data
+    createCollisionMap(mapId, img, map) {
+        // Create hidden canvas to read pixel data
+        const canvas = document.createElement('canvas');
+        const crop = map.imageCrop || { x: 0, y: 0, width: img.width, height: img.height };
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext('2d');
+
+        // Draw cropped portion of image
+        ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+
+        // Get pixel data
+        const imageData = ctx.getImageData(0, 0, crop.width, crop.height);
+
+        this.collisionCanvases[mapId] = canvas;
+        this.collisionMaps[mapId] = imageData;
+
+        console.log(`🗺️ Collision map created for ${mapId}: ${crop.width}x${crop.height}`);
+    },
+
+    // Check if a position is walkable
+    isWalkable(x, y) {
+        if (!this.currentMap) return true;
+
+        const mapId = this.currentMap.id;
+        const imageData = this.collisionMaps[mapId];
+
+        if (!imageData) return true; // No collision data, allow movement
+
+        // Convert world coordinates to map image coordinates
+        const mapX = Math.floor(x);
+        const mapY = Math.floor(y);
+
+        // Check bounds
+        if (mapX < 0 || mapY < 0 || mapX >= imageData.width || mapY >= imageData.height) {
+            return false; // Out of bounds
+        }
+
+        // Get pixel color at position
+        const index = (mapY * imageData.width + mapX) * 4;
+        const r = imageData.data[index];
+        const g = imageData.data[index + 1];
+        const b = imageData.data[index + 2];
+        const a = imageData.data[index + 3];
+
+        // Check if pixel is walkable (beige/tan color)
+        const walkable = this.currentMap.walkableColor;
+        const tolerance = this.currentMap.walkableColorTolerance || 30;
+
+        if (!walkable) return true; // No walkable color defined
+
+        // Color matching with tolerance
+        const matches =
+            Math.abs(r - walkable.r) <= tolerance &&
+            Math.abs(g - walkable.g) <= tolerance &&
+            Math.abs(b - walkable.b) <= tolerance &&
+            a > 128; // Not transparent
+
+        return matches;
     },
 
     // Update map
@@ -329,12 +370,24 @@ const MapSystem = {
         if (this.currentMap.backgroundImage) {
             const img = this.loadedImages[this.currentMap.backgroundImage];
             if (img && img.complete) {
+                // Get crop settings or use full image
+                const crop = this.currentMap.imageCrop || {
+                    x: 0,
+                    y: 0,
+                    width: img.width,
+                    height: img.height
+                };
+
                 // Calculate camera offset
                 const offsetX = -camera.x + game.canvas.width / 2;
                 const offsetY = -camera.y + game.canvas.height / 2;
 
-                // Draw the background image at the camera position
-                ctx.drawImage(img, offsetX, offsetY);
+                // Draw cropped portion of background image
+                ctx.drawImage(
+                    img,
+                    crop.x, crop.y, crop.width, crop.height,  // Source crop
+                    offsetX, offsetY, crop.width, crop.height  // Destination
+                );
             } else {
                 // Fallback to solid color while image loads
                 ctx.fillStyle = this.currentMap.backgroundColor;
