@@ -13,9 +13,20 @@ const MapSystem = {
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
             // Crop coordinates for main village area only
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
-            // Walkable path color (beige/tan streets)
-            walkableColor: { r: 200, g: 200, b: 170 }, // Approximate beige color
-            walkableColorTolerance: 50, // Color matching tolerance
+            // Walkable colors (beige/tan paths, green grass, brown bridges)
+            walkableColors: [
+                { r: 200, g: 200, b: 170 },  // Beige/tan paths
+                { r: 210, g: 210, b: 180 },  // Light tan
+                { r: 180, g: 180, b: 150 },  // Darker tan
+                { r: 160, g: 200, b: 140 },  // Light green grass
+                { r: 140, g: 180, b: 120 },  // Green grass
+                { r: 120, g: 160, b: 100 },  // Darker green
+                { r: 100, g: 140, b: 80 },   // Dark green
+                { r: 180, g: 140, b: 100 },  // Brown bridges
+                { r: 160, g: 120, b: 80 },   // Darker brown
+                { r: 220, g: 220, b: 200 },  // Very light tan/white paths
+            ],
+            walkableColorTolerance: 80, // Generous tolerance for color matching
             playerSpawn: { x: 260, y: 260 }, // Center of map, will adjust to walkable area
             npcs: [],
             decorations: [],
@@ -128,12 +139,12 @@ const MapSystem = {
             img.onload = () => {
                 console.log('🗺️ Map background loaded:', map.backgroundImage);
                 // Create collision map from image pixels
-                if (map.walkableColor) {
+                if (map.walkableColors || map.walkableColor) {
                     this.createCollisionMap(mapId, img, map);
                 }
             };
             this.loadedImages[map.backgroundImage] = img;
-        } else if (map.backgroundImage && map.walkableColor && !this.collisionMaps?.[mapId]) {
+        } else if (map.backgroundImage && (map.walkableColors || map.walkableColor) && !this.collisionMaps?.[mapId]) {
             // Image already loaded, create collision map
             const img = this.loadedImages[map.backgroundImage];
             if (img.complete) {
@@ -235,20 +246,26 @@ const MapSystem = {
         const b = imageData.data[index + 2];
         const a = imageData.data[index + 3];
 
-        // Check if pixel is walkable (beige/tan color)
-        const walkable = this.currentMap.walkableColor;
+        // Check if pixel is walkable (multiple color options)
+        const walkableColors = this.currentMap.walkableColors || [this.currentMap.walkableColor];
         const tolerance = this.currentMap.walkableColorTolerance || 30;
 
-        if (!walkable) return true; // No walkable color defined
+        if (!walkableColors || walkableColors.length === 0) return true; // No walkable colors defined
 
-        // Color matching with tolerance
-        const matches =
-            Math.abs(r - walkable.r) <= tolerance &&
-            Math.abs(g - walkable.g) <= tolerance &&
-            Math.abs(b - walkable.b) <= tolerance &&
-            a > 128; // Not transparent
+        // Check if pixel matches any walkable color
+        for (const walkableColor of walkableColors) {
+            if (!walkableColor) continue;
 
-        return matches;
+            const matches =
+                Math.abs(r - walkableColor.r) <= tolerance &&
+                Math.abs(g - walkableColor.g) <= tolerance &&
+                Math.abs(b - walkableColor.b) <= tolerance &&
+                a > 128; // Not transparent
+
+            if (matches) return true; // Found a match, position is walkable
+        }
+
+        return false; // No color match found, position is blocked
     },
 
     // Update map
