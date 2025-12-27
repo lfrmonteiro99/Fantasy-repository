@@ -555,9 +555,18 @@ class NarutoActionRPG {
             `Camera: (${Math.floor(this.camera.x)}, ${Math.floor(this.camera.y)})`
         ];
 
+        // Add walkable area info if available
+        if (this.currentMap?.walkableInfo) {
+            const w = this.currentMap.walkableInfo;
+            debugInfo.push('');
+            debugInfo.push(`Scale: ${w.scaleX}x, ${w.scaleY}y`);
+            debugInfo.push(`Walkable: (${w.scaledBounds.minX},${w.scaledBounds.minY})`);
+            debugInfo.push(`       to (${w.scaledBounds.maxX},${w.scaledBounds.maxY})`);
+        }
+
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(10, 10, 200, debugInfo.length * 20 + 10);
+        this.ctx.fillRect(10, 10, 280, debugInfo.length * 20 + 10);
 
         debugInfo.forEach((line, index) => {
             Utils.drawText(this.ctx, line, 15, 15 + index * 20, {

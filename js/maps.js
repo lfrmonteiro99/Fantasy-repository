@@ -257,36 +257,33 @@ const MapSystem = {
             }
         }
 
-        console.log(`   Found ${walkableRegions.length} walkable sample points`);
-        console.log('   Walkable coordinates in ORIGINAL map (520×520):');
-        console.log(`   - Top-left walkable: (${Math.min(...walkableRegions.map(r => r.x))}, ${Math.min(...walkableRegions.map(r => r.y))})`);
-        console.log(`   - Bottom-right walkable: (${Math.max(...walkableRegions.map(r => r.x))}, ${Math.max(...walkableRegions.map(r => r.y))})`);
-
-        // Show scaled coordinates
+        // Calculate scaled coordinates
         const scaleX = this.currentMap.scaleX || 1;
         const scaleY = this.currentMap.scaleY || 1;
-        console.log('\n   Walkable coordinates in SCALED viewport:');
-        console.log(`   - Scale factors: X=${scaleX.toFixed(2)}, Y=${scaleY.toFixed(2)}`);
-        console.log(`   - Top-left walkable: (${Math.floor(Math.min(...walkableRegions.map(r => r.x)) * scaleX)}, ${Math.floor(Math.min(...walkableRegions.map(r => r.y)) * scaleY)})`);
-        console.log(`   - Bottom-right walkable: (${Math.floor(Math.max(...walkableRegions.map(r => r.x)) * scaleX)}, ${Math.floor(Math.max(...walkableRegions.map(r => r.y)) * scaleY)})`);
 
-        // Sample some walkable areas by region
-        console.log('\n   Sample walkable zones (SCALED coordinates):');
-        const regions = {
-            'Top-Left': walkableRegions.filter(r => r.x < 130 && r.y < 130),
-            'Top-Right': walkableRegions.filter(r => r.x > 390 && r.y < 130),
-            'Bottom-Left': walkableRegions.filter(r => r.x < 130 && r.y > 390),
-            'Bottom-Right': walkableRegions.filter(r => r.x > 390 && r.y > 390),
-            'Center': walkableRegions.filter(r => r.x > 200 && r.x < 320 && r.y > 200 && r.y < 320)
+        const minX = Math.min(...walkableRegions.map(r => r.x));
+        const minY = Math.min(...walkableRegions.map(r => r.y));
+        const maxX = Math.max(...walkableRegions.map(r => r.x));
+        const maxY = Math.max(...walkableRegions.map(r => r.y));
+
+        // Store info for on-screen display
+        this.currentMap.walkableInfo = {
+            count: walkableRegions.length,
+            scaleX: scaleX.toFixed(2),
+            scaleY: scaleY.toFixed(2),
+            scaledBounds: {
+                minX: Math.floor(minX * scaleX),
+                minY: Math.floor(minY * scaleY),
+                maxX: Math.floor(maxX * scaleX),
+                maxY: Math.floor(maxY * scaleY)
+            }
         };
 
-        for (const [name, points] of Object.entries(regions)) {
-            if (points.length > 0) {
-                const sample = points[0];
-                console.log(`   - ${name}: (${Math.floor(sample.x * scaleX)}, ${Math.floor(sample.y * scaleY)}) RGB(${sample.r},${sample.g},${sample.b})`);
-            }
-        }
-        console.log('\n');
+        // Show on-screen message
+        const info = this.currentMap.walkableInfo;
+        const message = `Walkable Area (Scaled Coords):\nScale: ${info.scaleX}x, ${info.scaleY}y\nBounds: (${info.scaledBounds.minX},${info.scaledBounds.minY}) to (${info.scaledBounds.maxX},${info.scaledBounds.maxY})\n${info.count} walkable points detected`;
+
+        console.log('\n🚶 ' + message.replace(/\n/g, '\n   '));
     },
 
     // Check if a position is walkable
