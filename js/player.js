@@ -257,9 +257,20 @@ class Player extends Combatant {
             this.vx = Math.cos(this.joystickInput.angle) * moveSpeed * speedMultiplier;
             this.vy = Math.sin(this.joystickInput.angle) * moveSpeed * speedMultiplier;
 
+            // Store previous position for road constraint
+            const prevX = this.x;
+            const prevY = this.y;
+
             // Move
             this.x += this.vx * dt;
             this.y += this.vy * dt;
+
+            // Constrain to roads if road system is active
+            if (typeof Roads !== 'undefined') {
+                const constrained = Roads.constrainToRoad(this.x, this.y, prevX, prevY);
+                this.x = constrained.x;
+                this.y = constrained.y;
+            }
 
             // Update target to current position (prevents click-to-move interference)
             this.targetX = this.x;
@@ -277,9 +288,20 @@ class Player extends Combatant {
                 this.vx = Math.cos(angle) * moveSpeed;
                 this.vy = Math.sin(angle) * moveSpeed;
 
+                // Store previous position for road constraint
+                const prevX = this.x;
+                const prevY = this.y;
+
                 // Move
                 this.x += this.vx * dt;
                 this.y += this.vy * dt;
+
+                // Constrain to roads if road system is active
+                if (typeof Roads !== 'undefined') {
+                    const constrained = Roads.constrainToRoad(this.x, this.y, prevX, prevY);
+                    this.x = constrained.x;
+                    this.y = constrained.y;
+                }
 
                 // Stop if reached target
                 if (this.distanceTo({ x: this.targetX, y: this.targetY }) < moveSpeed * dt) {

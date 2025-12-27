@@ -130,30 +130,102 @@ class EnvironmentManager {
         }
     }
 
-    // Create a sample Konoha village scene
+    // Create a sample Konoha village scene alongside roads
     createSampleVillage(centerX = 400, centerY = 300) {
         this.clear();
 
+        const roadWidth = 120;
+        const roadOffset = roadWidth / 2 + 20; // Offset buildings from road edge
+
         // Background buildings (far away, smaller)
-        this.addObject('bg_building_large', centerX - 200, centerY - 150, 0.7, 'background');
-        this.addObject('bg_building_small', centerX + 300, centerY - 120, 0.7, 'background');
+        this.addObject('bg_building_large', centerX - 400, centerY - 300, 0.6, 'background');
+        this.addObject('bg_building_small', centerX + 350, centerY - 250, 0.6, 'background');
 
-        // Midground - larger buildings
-        this.addObject('house_small_1', centerX - 300, centerY + 50, 1, 'midground');
-        this.addObject('house_small_2', centerX + 100, centerY + 50, 1, 'midground');
-        this.addObject('shop_large', centerX - 150, centerY + 200, 0.9, 'midground');
+        // Buildings along main horizontal road (Y=300)
+        // North side of road
+        this.addObject('house_small_1', centerX - 450, centerY - roadOffset - 137, 1, 'midground');
+        this.addObject('house_medium', centerX + 200, centerY - roadOffset - 137, 1, 'midground');
 
-        // Foreground - props and decorations
-        this.addObject('sign_post', centerX - 100, centerY, 1, 'foreground');
-        this.addObject('wooden_box_1', centerX + 50, centerY + 20, 1, 'foreground');
-        this.addObject('wooden_box_2', centerX + 80, centerY + 20, 1, 'foreground');
-        this.addObject('barrel_1', centerX - 50, centerY + 30, 1, 'foreground');
-        this.addObject('barrel_2', centerX - 20, centerY + 30, 1, 'foreground');
-        this.addObject('market_stall', centerX + 200, centerY + 10, 1, 'foreground');
-        this.addObject('bench', centerX - 150, centerY - 20, 1, 'foreground');
-        this.addObject('wooden_fence', centerX + 150, centerY - 50, 1, 'foreground');
+        // South side of road
+        this.addObject('house_small_2', centerX - 200, centerY + roadOffset, 1, 'midground');
+        this.addObject('shop_large', centerX + 100, centerY + roadOffset, 0.9, 'midground');
 
-        console.log('🏘️ Sample Konoha village created');
+        // Buildings along upper horizontal road (Y=50)
+        // North side
+        this.addObject('house_medium', centerX - 300, centerY - 250 - roadOffset - 137, 0.9, 'midground');
+
+        // South side
+        this.addObject('house_small_1', centerX + 150, centerY - 250 + roadOffset, 0.9, 'midground');
+
+        // Buildings along lower horizontal road (Y=550)
+        // North side
+        this.addObject('house_small_2', centerX - 350, centerY + 250 - roadOffset - 137, 0.9, 'midground');
+
+        // South side
+        this.addObject('house_medium', centerX + 200, centerY + 250 + roadOffset, 0.9, 'midground');
+
+        // Buildings along vertical road (X=400)
+        // West side
+        this.addObject('shop_large', centerX - roadOffset - 559, centerY - 100, 0.8, 'midground');
+
+        // East side
+        this.addObject('house_small_1', centerX + roadOffset, centerY + 100, 0.9, 'midground');
+
+        // Foreground - props and decorations along roads
+        this.addObject('sign_post', centerX - 250, centerY - 30, 1, 'foreground');
+        this.addObject('sign_post', centerX + 180, centerY - 30, 1, 'foreground');
+        this.addObject('wooden_box_1', centerX - 100, centerY + roadOffset + 10, 1, 'foreground');
+        this.addObject('wooden_box_2', centerX - 130, centerY + roadOffset + 10, 1, 'foreground');
+        this.addObject('barrel_1', centerX + 50, centerY - roadOffset - 40, 1, 'foreground');
+        this.addObject('barrel_2', centerX + 80, centerY - roadOffset - 40, 1, 'foreground');
+        this.addObject('market_stall', centerX - 300, centerY + 30, 1, 'foreground');
+        this.addObject('bench', centerX - roadOffset - 100, centerY, 1, 'foreground');
+        this.addObject('bench', centerX + roadOffset + 10, centerY - 200, 1, 'foreground');
+        this.addObject('wooden_fence', centerX, centerY - 250 + roadOffset + 10, 1, 'foreground');
+        this.addObject('stone_pillar', centerX, centerY, 1, 'foreground');
+
+        // Add building triggers (if Roads system is available)
+        if (typeof Roads !== 'undefined') {
+            // Mission Log building (large shop on south side of main road)
+            Roads.addBuildingTrigger(
+                centerX + 100,
+                centerY + roadOffset,
+                559 * 0.9,
+                137 * 0.9,
+                'mission_log'
+            );
+
+            // Shop building (house on north side)
+            Roads.addBuildingTrigger(
+                centerX + 200,
+                centerY - roadOffset - 137,
+                213,
+                137,
+                'shop'
+            );
+
+            // Inn/Rest building (house on lower road)
+            Roads.addBuildingTrigger(
+                centerX + 200,
+                centerY + 250 + roadOffset,
+                213 * 0.9,
+                137 * 0.9,
+                'inn'
+            );
+
+            // Training grounds (west side building)
+            Roads.addBuildingTrigger(
+                centerX - roadOffset - 559,
+                centerY - 100,
+                559 * 0.8,
+                137 * 0.8,
+                'training'
+            );
+
+            console.log('🏘️ Konoha village created with interactive buildings');
+        } else {
+            console.log('🏘️ Konoha village created alongside roads');
+        }
     }
 
     // Get all objects at a specific world position (for collision/interaction)

@@ -14,6 +14,7 @@ class NarutoActionRPG {
         this.projectiles = [];
         this.particles = [];
         this.itemDrops = [];
+        this.notifications = [];
 
         // Camera
         this.camera = {
@@ -413,7 +414,10 @@ class NarutoActionRPG {
         // Load starting map
         MapSystem.loadMap('konoha_hub', this);
 
-        // Create Konoha village environment
+        // Create Konoha village roads
+        Roads.createKonohaVillageRoads();
+
+        // Create Konoha village environment (buildings along roads)
         Environment.createSampleVillage(this.player.x, this.player.y);
 
         // Start game
@@ -457,6 +461,17 @@ class NarutoActionRPG {
         // Update map
         MapSystem.update(this, dt);
 
+        // Update roads and building triggers
+        Roads.update(this, dt);
+
+        // Update notifications
+        if (this.notifications) {
+            this.notifications = this.notifications.filter(notif => {
+                notif.duration -= dt;
+                return notif.duration > 0;
+            });
+        }
+
         // Update camera
         this.updateCamera(dt);
 
@@ -493,6 +508,9 @@ class NarutoActionRPG {
             // Draw map
             MapSystem.draw(this.ctx, this);
 
+            // Draw roads (brick paths)
+            Roads.draw(this.ctx, this.camera);
+
             // Draw environment background layer (far background buildings)
             Environment.drawLayer(this.ctx, this.camera, 'background');
 
@@ -527,6 +545,9 @@ class NarutoActionRPG {
                 }
             }
 
+            // Draw notifications
+            this.drawNotifications();
+
             // Draw debug info
             if (this.showDebug) {
                 this.drawDebugInfo();
@@ -557,6 +578,40 @@ class NarutoActionRPG {
                 color: '#00FF00'
             });
         });
+        this.ctx.restore();
+    }
+
+    drawNotifications() {
+        if (!this.notifications || this.notifications.length === 0) return;
+
+        this.ctx.save();
+
+        const startY = 100;
+        const spacing = 50;
+
+        this.notifications.forEach((notif, index) => {
+            const y = startY + index * spacing;
+            const alpha = Math.min(1, notif.duration);
+
+            // Background
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${0.7 * alpha})`;
+            this.ctx.fillRect(this.canvas.width / 2 - 150, y - 15, 300, 40);
+
+            // Border
+            this.ctx.strokeStyle = notif.color || '#FF6B1A';
+            this.ctx.globalAlpha = alpha;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(this.canvas.width / 2 - 150, y - 15, 300, 40);
+
+            // Text
+            Utils.drawText(this.ctx, notif.message, this.canvas.width / 2, y + 5, {
+                font: 'bold 16px Arial',
+                color: notif.color || '#FFFFFF',
+                align: 'center',
+                alpha: alpha
+            });
+        });
+
         this.ctx.restore();
     }
 
