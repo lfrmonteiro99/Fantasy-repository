@@ -535,6 +535,9 @@ class NarutoActionRPG {
             // Draw notifications
             this.drawNotifications();
 
+            // Always show walkable area info
+            this.drawWalkableInfo();
+
             // Draw debug info
             if (this.showDebug) {
                 this.drawDebugInfo();
@@ -572,6 +575,35 @@ class NarutoActionRPG {
             Utils.drawText(this.ctx, line, 15, 15 + index * 20, {
                 font: '14px monospace',
                 color: '#00FF00'
+            });
+        });
+        this.ctx.restore();
+    }
+
+    drawWalkableInfo() {
+        if (!this.currentMap?.walkableInfo) return;
+
+        const w = this.currentMap.walkableInfo;
+        const info = [
+            'WALKABLE AREA (Scaled Coords):',
+            `Scale: ${w.scaleX}x, ${w.scaleY}y`,
+            `From: (${w.scaledBounds.minX}, ${w.scaledBounds.minY})`,
+            `To: (${w.scaledBounds.maxX}, ${w.scaledBounds.maxY})`,
+            `Player: (${Math.floor(this.player?.x || 0)}, ${Math.floor(this.player?.y || 0)})`
+        ];
+
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(10, this.canvas.height - 130, 320, 120);
+
+        this.ctx.strokeStyle = '#00FF00';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(10, this.canvas.height - 130, 320, 120);
+
+        info.forEach((line, index) => {
+            Utils.drawText(this.ctx, line, 20, this.canvas.height - 110 + index * 22, {
+                font: index === 0 ? 'bold 14px monospace' : '14px monospace',
+                color: index === 0 ? '#FFD700' : '#00FF00'
             });
         });
         this.ctx.restore();
