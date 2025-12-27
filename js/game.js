@@ -56,6 +56,7 @@ class NarutoActionRPG {
         // Mobile interaction tracking
         this.lastTapNearNPC = null;
         this.lastTapInExitZone = false;
+        this.lastTapInZone = null;
     }
 
     async init() {
@@ -287,6 +288,31 @@ class NarutoActionRPG {
                     // Tapped in exit zone
                     this.lastTapInExitZone = true;
                     return; // Don't set move target
+                }
+            }
+
+            // Check if tapped in interaction zone (for Mission Log, etc.)
+            if (this.currentMap && this.currentMap.interactionZones && this.player) {
+                const scaleX = this.currentMap.scaleX || 1;
+                const scaleY = this.currentMap.scaleY || 1;
+
+                for (let zone of this.currentMap.interactionZones) {
+                    // Scale zone coordinates
+                    const scaledZoneX = zone.x * scaleX;
+                    const scaledZoneY = zone.y * scaleY;
+                    const scaledZoneWidth = zone.width * scaleX;
+                    const scaledZoneHeight = zone.height * scaleY;
+                    const scaledRange = zone.interactRange * Math.min(scaleX, scaleY);
+
+                    // Check if tap is in or near zone
+                    if (worldPos.x >= scaledZoneX - scaledRange &&
+                        worldPos.x <= scaledZoneX + scaledZoneWidth + scaledRange &&
+                        worldPos.y >= scaledZoneY - scaledRange &&
+                        worldPos.y <= scaledZoneY + scaledZoneHeight + scaledRange) {
+                        // Tapped in interaction zone
+                        this.lastTapInZone = zone;
+                        return; // Don't set move target
+                    }
                 }
             }
 
