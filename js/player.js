@@ -481,16 +481,20 @@ class Player extends Combatant {
             const spriteWidth = 90;
             const spriteHeight = 90;
 
-            // ANALYZED POSITIONING: Character feet are at Y=89 in 80x90px frame
+            // ANALYZED POSITIONING: Character feet are at Y=89 in 90x90px frame
             // Bottom of sprite should align with player position
-            const drawX = Math.round(screen.x - spriteWidth/2);  // Center horizontally
-            const drawY = Math.round(screen.y - 89);              // Feet at player position (analyzed)
+            const drawX = Math.floor(screen.x - spriteWidth/2);  // Floor for pixel-perfect
+            const drawY = Math.floor(screen.y - 89);              // Floor for pixel-perfect
 
             // Flip sprite based on facing direction (left/right)
             const flipX = this.facingAngle > Math.PI/2 || this.facingAngle < -Math.PI/2;
 
-            // Disable smoothing for pixel-perfect rendering
+            // Configure for crisp pixel art rendering
+            ctx.save();
             ctx.imageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
 
             this.currentAnimation.draw(
                 ctx,
@@ -501,7 +505,7 @@ class Player extends Combatant {
                 flipX
             );
 
-            ctx.imageSmoothingEnabled = true;
+            ctx.restore();
         } else {
             // Fallback: Draw circle if sprites not loaded
             Utils.drawCircle(ctx, screen.x, screen.y, this.radius, this.color, true);
