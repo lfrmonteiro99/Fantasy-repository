@@ -7,10 +7,11 @@ const MapSystem = {
             id: 'konoha_hub',
             name: 'Hidden Leaf Village',
             type: 'hub',
-            width: 1600,
-            height: 1200,
-            backgroundColor: '#2D5016',
-            playerSpawn: { x: 400, y: 300 },
+            width: 512,
+            height: 512,
+            backgroundColor: '#87CEEB',
+            backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
+            playerSpawn: { x: 256, y: 256 },
             npcs: [
                 {
                     id: 'shop_keeper',
@@ -128,6 +129,7 @@ const MapSystem = {
     missionCompleted: false,
     hiddenMist: false,
     hiddenMistAlpha: 0,
+    loadedImages: {},
 
     // Load map
     loadMap(mapId, game) {
@@ -139,6 +141,14 @@ const MapSystem = {
 
         this.currentMap = { ...map };
         game.currentMap = this.currentMap;
+
+        // Load background image if specified
+        if (map.backgroundImage && !this.loadedImages[map.backgroundImage]) {
+            const img = new Image();
+            img.src = map.backgroundImage;
+            this.loadedImages[map.backgroundImage] = img;
+            console.log('🗺️ Loading map background:', map.backgroundImage);
+        }
 
         // Reset map state
         this.missionCompleted = false;
@@ -316,8 +326,25 @@ const MapSystem = {
         const camera = game.camera;
 
         // Draw background
-        ctx.fillStyle = this.currentMap.backgroundColor;
-        ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
+        if (this.currentMap.backgroundImage) {
+            const img = this.loadedImages[this.currentMap.backgroundImage];
+            if (img && img.complete) {
+                // Calculate camera offset
+                const offsetX = -camera.x + game.canvas.width / 2;
+                const offsetY = -camera.y + game.canvas.height / 2;
+
+                // Draw the background image at the camera position
+                ctx.drawImage(img, offsetX, offsetY);
+            } else {
+                // Fallback to solid color while image loads
+                ctx.fillStyle = this.currentMap.backgroundColor;
+                ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
+            }
+        } else {
+            // Draw solid color background
+            ctx.fillStyle = this.currentMap.backgroundColor;
+            ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
+        }
 
         // Draw decorations
         if (this.currentMap.decorations) {
