@@ -134,40 +134,49 @@ class EnvironmentManager {
     createSampleVillage(centerX = 400, centerY = 300) {
         this.clear();
 
+        // STEP 1: Define the + shaped road network
         const roadWidth = 120;
         const roadTop = centerY - roadWidth / 2;      // Y = 240
         const roadBottom = centerY + roadWidth / 2;   // Y = 360
         const roadLeft = centerX - roadWidth / 2;     // X = 340
         const roadRight = centerX + roadWidth / 2;    // X = 460
 
-        // Interactive buildings positioned directly on roads
-        // Each building's entrance zone (bottom 30%) will overlap with the road
+        // STEP 2: Position buildings so entrance zones are INSIDE roads
+        // Entrance zones are 30% of building size, positioned on road-facing side
 
-        // 1. Mission Log (shop_large) - SOUTH side of horizontal road
-        const missionLogW = 559 * 0.9;
-        const missionLogH = 137 * 0.9;
+        // 1. Mission Log (shop_large) - SOUTH of horizontal road
+        // Entrance at TOP 30%, needs to be in road Y=240-360
+        const missionLogW = 559 * 0.9;  // 503px
+        const missionLogH = 137 * 0.9;  // 123px
+        const missionLogEntranceH = missionLogH * 0.3; // 37px
         const missionLogX = centerX + 50;
-        const missionLogY = roadBottom; // Building starts at road edge
+        const missionLogY = centerY - missionLogEntranceH / 2; // Entrance centered on road
         this.addObject('shop_large', missionLogX, missionLogY, 0.9, 'midground');
 
-        // 2. Shop (house_medium) - NORTH side of horizontal road
+        // 2. Shop (house_medium) - NORTH of horizontal road
+        // Entrance at BOTTOM 30%, needs to be in road Y=240-360
         const shopW = 213;
         const shopH = 137;
+        const shopEntranceH = shopH * 0.3; // 41px
         const shopX = centerX - 300;
-        const shopY = roadTop - shopH; // Building ends at road edge
+        const shopY = centerY - shopH + shopEntranceH / 2; // Entrance centered on road
         this.addObject('house_medium', shopX, shopY, 1, 'midground');
 
-        // 3. Inn (house_medium) - EAST side of vertical road
-        const innW = 213 * 0.9;
-        const innH = 137 * 0.9;
-        const innX = roadRight; // Building starts at road edge
-        const innY = centerY + 100;
+        // 3. Inn (house_medium) - EAST of vertical road
+        // Entrance at LEFT 30%, needs to be in road X=340-460
+        const innW = 213 * 0.9;  // 192px
+        const innH = 137 * 0.9;  // 123px
+        const innEntranceW = innW * 0.3; // 58px
+        const innX = centerX - innEntranceW / 2; // Entrance centered on road
+        const innY = centerY + 80;
         this.addObject('house_medium', innX, innY, 0.9, 'midground');
 
-        // 4. Training (shop_large) - WEST side of vertical road
-        const trainingW = 559 * 0.8;
-        const trainingH = 137 * 0.8;
-        const trainingX = roadLeft - trainingW; // Building ends at road edge
+        // 4. Training (shop_large) - WEST of vertical road
+        // Entrance at RIGHT 30%, needs to be in road X=340-460
+        const trainingW = 559 * 0.8;  // 447px
+        const trainingH = 137 * 0.8;  // 110px
+        const trainingEntranceW = trainingW * 0.3; // 134px
+        const trainingX = centerX - trainingW + trainingEntranceW / 2; // Entrance centered on road
         const trainingY = centerY - 150;
         this.addObject('shop_large', trainingX, trainingY, 0.8, 'midground');
 
