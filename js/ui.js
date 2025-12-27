@@ -329,67 +329,111 @@ const UISystem = {
         const player = this.game.player;
         if (!player) return;
 
-        // Update equipped abilities
-        const equippedContainer = document.getElementById('equipped-abilities');
-        equippedContainer.innerHTML = '';
+        const charDef = PlayerSystem.characters[player.characterId];
+        if (!charDef) return;
 
-        player.equippedAbilities.forEach((abilityId, index) => {
-            if (abilityId) {
-                const ability = AbilitySystem.getAbility(abilityId);
-                if (ability) {
-                    const abilityEl = this.createAbilityCard(ability, true, index);
-                    equippedContainer.appendChild(abilityEl);
-                }
-            }
-        });
+        // Update Active Abilities
+        const activeGrid = document.getElementById('active-abilities-grid');
+        activeGrid.innerHTML = '';
 
-        // Update available abilities
-        const availableContainer = document.getElementById('available-abilities');
-        availableContainer.innerHTML = '';
-
-        player.availableAbilities.forEach(abilityId => {
+        charDef.abilities.forEach(abilityId => {
             const ability = AbilitySystem.getAbility(abilityId);
             if (ability) {
                 const isEquipped = player.equippedAbilities.includes(abilityId);
-                const isLocked = player.level < ability.unlockLevel;
+                const card = this.createActiveAbilityCard(ability, isEquipped, player);
+                activeGrid.appendChild(card);
+            }
+        });
 
-                const abilityEl = this.createAbilityCard(ability, false, -1, isLocked, isEquipped);
-                availableContainer.appendChild(abilityEl);
+        // Update Passive Abilities
+        const passiveGrid = document.getElementById('passive-abilities-grid');
+        passiveGrid.innerHTML = '';
+
+        charDef.passives.forEach(passiveId => {
+            const passive = AbilitySystem.getPassive(passiveId);
+            if (passive) {
+                const unlockLevel = charDef.passiveUnlockLevels[passiveId] || 1;
+                const isUnlocked = player.passives.includes(passiveId);
+                const card = this.createPassiveAbilityCard(passive, isUnlocked, unlockLevel, player);
+                passiveGrid.appendChild(card);
             }
         });
     },
 
-    // Create ability card element
-    createAbilityCard(ability, isEquipped, slot, isLocked = false, alreadyEquipped = false) {
+    // Create active ability card
+    createActiveAbilityCard(ability, isEquipped, player) {
         const card = document.createElement('div');
         card.className = 'ability-card';
 
-        if (isLocked) {
-            card.classList.add('locked');
+        if (isEquipped) {
+            card.classList.add('equipped');
         }
 
         const rank = ability.currentRank || 0;
         const rankInfo = ability.ranks ? ability.ranks[rank] : null;
+        const usage = player.abilityUsage[ability.id] || 0;
+
+        // Calculate next rank requirements
+        const usageThresholds = [50, 150, 300];
+        const nextRankUsage = rank < usageThresholds.length ? usageThresholds[rank] : null;
+        const progress = nextRankUsage ? Math.min((usage / nextRankUsage) * 100, 100) : 100;
+
+        // Get stats from current rank
+        let statsHTML = '';
+        if (rankInfo) {
+            const stats = Object.entries(rankInfo).filter(([key]) => key !== 'level');
+            statsHTML = stats.map(([key, value]) => {
+                const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                return `<span>${label}: ${value}</span>`;
+            }).join('');
+        }
 
         card.innerHTML = `
-            <h4>${ability.name} ${rankInfo ? `(Rank ${rank + 1})` : ''}</h4>
-            <p>${ability.description}</p>
-            <div class="ability-stats">
-                <span>Chakra: ${ability.chakraCost}</span>
-                <span>Cooldown: ${ability.cooldown}s</span>
-                ${ability.damage > 0 ? `<span>Damage: ${ability.damage}</span>` : ''}
+            <div class="ability-card-header">
+                <h4>${ability.name}</h4>
+                <span class="ability-rank">Rank ${rank + 1}/3</span>
             </div>
-            ${isLocked ? '<p style="color: #FF6B1A;">Unlocks at level ' + ability.unlockLevel + '</p>' : ''}
-            ${alreadyEquipped ? '<p style="color: #00FF00;">Equipped</p>' : ''}
+            <div class="ability-description">${ability.description}</div>
+            <div class="ability-stats">
+                <span>⚡ ${ability.chakraCost} Chakra</span>
+                <span>⏱️ ${ability.cooldown}s CD</span>
+            </div>
+            ${statsHTML ? `<div class="ability-stats">${statsHTML}</div>` : ''}
+            ${isEquipped ? '<div class="ability-unlock-condition">✓ Currently Equipped</div>' : ''}
+            ${nextRankUsage ? `
+                <div class="ability-progression">
+                    <div class="ability-progression-label">Rank ${rank + 2} Progress</div>
+                    <div class="ability-progress-bar">
+                        <div class="ability-progress-fill" style="width: ${progress}%"></div>
+                        <div class="ability-progress-text">${usage} / ${nextRankUsage} uses</div>
+                    </div>
+                </div>
+            ` : '<div class="ability-unlock-condition">🌟 Max Rank Achieved!</div>'}
         `;
 
-        if (!isLocked && !alreadyEquipped) {
-            card.addEventListener('click', () => {
-                AudioManager.playUI('click');
-                // TODO: Implement ability swapping
-                alert('Ability swapping coming soon!');
-            });
+        return card;
+    },
+
+    // Create passive ability card
+    createPassiveAbilityCard(passive, isUnlocked, unlockLevel, player) {
+        const card = document.createElement('div');
+        card.className = 'ability-card';
+
+        if (!isUnlocked) {
+            card.classList.add('locked');
         }
+
+        card.innerHTML = `
+            <div class="ability-card-header">
+                <h4>${passive.name}</h4>
+                <span class="ability-rank">${isUnlocked ? 'Active' : 'Locked'}</span>
+            </div>
+            <div class="ability-description">${passive.description}</div>
+            ${isUnlocked
+                ? '<div class="ability-unlock-condition">✓ Unlocked</div>'
+                : `<div class="ability-unlock-condition">🔒 Unlocks at Level ${unlockLevel} (Current: ${player.level})</div>`
+            }
+        `;
 
         return card;
     },

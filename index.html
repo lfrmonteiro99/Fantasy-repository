@@ -216,18 +216,21 @@
 
         <!-- Abilities Modal -->
         <div id="abilities-modal" class="modal hidden">
-            <div class="modal-content large">
-                <h2>ABILITIES</h2>
-                <div class="abilities-layout">
-                    <div class="equipped-abilities-panel">
-                        <h3>Equipped (4 Max)</h3>
-                        <div class="equipped-abilities" id="equipped-abilities"></div>
-                    </div>
-                    <div class="available-abilities-panel">
-                        <h3>Available Abilities</h3>
-                        <div class="available-abilities" id="available-abilities"></div>
-                    </div>
+            <div class="modal-content abilities-modal-content">
+                <h2>ABILITIES & PROGRESSION</h2>
+
+                <!-- Active Abilities Section -->
+                <div class="abilities-section">
+                    <h3>⚡ Active Abilities</h3>
+                    <div class="abilities-grid" id="active-abilities-grid"></div>
                 </div>
+
+                <!-- Passive Abilities Section -->
+                <div class="abilities-section">
+                    <h3>✨ Passive Abilities</h3>
+                    <div class="abilities-grid" id="passive-abilities-grid"></div>
+                </div>
+
                 <button class="menu-btn close-btn" id="close-abilities-btn">Close</button>
             </div>
         </div>
