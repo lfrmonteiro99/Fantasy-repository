@@ -113,7 +113,7 @@ class Player extends Combatant {
             this.spriteSheet = await SpriteManager.loadSpriteSheet(
                 `${this.characterId}_sheet`,
                 spritePath,
-                80,  // Frame width - Naruto DS sprites
+                90,  // Frame width - Naruto DS sprites
                 90   // Frame height - Naruto DS sprites
             );
 
@@ -478,7 +478,7 @@ class Player extends Combatant {
         // Draw sprite animation or fallback to circle
         if (this.currentAnimation) {
             // Sprite rendering with pixel-perfect alignment
-            const spriteWidth = 80;
+            const spriteWidth = 90;
             const spriteHeight = 90;
 
             // ANALYZED POSITIONING: Character feet are at Y=89 in 80x90px frame
