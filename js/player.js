@@ -134,17 +134,17 @@ class Player extends Combatant {
                 10
             );
 
-            // Row 2: Run animation (first 4 frames)
+            // Row 3: Run animation (4th row - first 4 frames)
             this.animations.run = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2}, {row: 2, col: 3}],
+                [{row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3}],
                 12
             );
 
-            // Row 3: Attack animation (first 5 frames, no loop)
+            // Row 2: Attack animation (first 5 frames, no loop)
             this.animations.attack = new SpriteAnimation(
                 this.spriteSheet,
-                [{row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3}, {row: 3, col: 4}],
+                [{row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2}, {row: 2, col: 3}, {row: 2, col: 4}],
                 15
             );
             this.animations.attack.loop = false;
