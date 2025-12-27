@@ -141,11 +141,11 @@ class Player extends Combatant {
                 12
             );
 
-            // Row 12: Attack animation (13th row - using 6 frames for smoother attack)
+            // Row 12: Attack animation (13th row - 5 frames)
             this.animations.attack = new SpriteAnimation(
                 this.spriteSheet,
                 [{row: 12, col: 0}, {row: 12, col: 1}, {row: 12, col: 2},
-                 {row: 12, col: 3}, {row: 12, col: 4}, {row: 12, col: 5}],
+                 {row: 12, col: 3}, {row: 12, col: 4}],
                 18  // Faster FPS for snappy attack
             );
             this.animations.attack.loop = false;
