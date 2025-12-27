@@ -748,9 +748,22 @@ class NarutoActionRPG {
     }
 
     openMissionSelect(npc) {
-        if (!npc.missions || npc.missions.length === 0) return;
+        // Handle both NPC-based and zone-based mission selection
+        let mission;
 
-        const mission = npc.missions[0]; // Land of Waves
+        if (npc && npc.missions && npc.missions.length > 0) {
+            mission = npc.missions[0];
+        } else {
+            // Default mission for Mission Log zone
+            mission = {
+                id: 'land_of_waves',
+                name: 'Mission: Land of Waves',
+                description: 'Travel to the Land of Waves and protect the bridge builder',
+                difficulty: 'C-Rank',
+                unlocked: true
+            };
+        }
+
         UISystem.showMissionSelectModal(mission, this);
     }
 }
