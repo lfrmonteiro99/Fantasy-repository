@@ -474,12 +474,19 @@ body {
 }
 
 /* Abilities */
-.abilities-container {
+.abilities-wrapper {
     position: absolute;
     bottom: max(10px, env(safe-area-inset-bottom));
-    right: max(10px, env(safe-area-inset-right));
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    left: max(10px, env(safe-area-inset-left));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.abilities-container {
+    display: flex;
+    flex-direction: row;
     gap: 8px;
 }
 
@@ -1084,15 +1091,24 @@ body {
         display: none;
     } */
 
-    .abilities-container {
+    .abilities-wrapper {
         bottom: 30px;
-        right: 30px;
+        left: 30px;
+        gap: 15px;
+    }
+
+    .abilities-container {
         gap: 15px;
     }
 
     .ability-btn {
         width: 80px;
         height: 80px;
+    }
+
+    .melee-btn {
+        width: 90px;
+        height: 90px;
     }
 
     .hud-top {

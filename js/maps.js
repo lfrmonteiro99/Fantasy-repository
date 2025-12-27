@@ -505,13 +505,7 @@ const MapSystem = {
                                       (game.lastTapInZone);
 
                 if (shouldInteract) {
-                    if (!game.notifications) game.notifications = [];
-                    game.notifications.push({ message: 'shouldInteract = true', duration: 3 });
-
                     this.interactWithZone(zone, game);
-
-                    game.notifications.push({ message: 'After interactWithZone', duration: 3 });
-
                     if (game.input) game.input.space = false;
                     game.lastTapInZone = null;
                 }
@@ -523,15 +517,8 @@ const MapSystem = {
 
     // Interact with zone
     interactWithZone(zone, game) {
-        // Show notification
-        if (!game.notifications) game.notifications = [];
-        game.notifications.push({ message: `Accessing ${zone.name}`, duration: 2 });
-
         if (zone.type === 'mission_log') {
-            // Open mission select
-            game.notifications.push({ message: 'Before openMissionSelect', duration: 3 });
             game.openMissionSelect();
-            game.notifications.push({ message: 'After openMissionSelect', duration: 3 });
         }
 
         AudioManager.playUI('click');

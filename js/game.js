@@ -263,10 +263,6 @@ class NarutoActionRPG {
         const pos = Utils.getInputPosition(e, this.canvas);
         this.input.mouse.down = true;
 
-        // Debug: show tap detected
-        if (!this.notifications) this.notifications = [];
-        this.notifications.push({ message: `Tap at (${Math.floor(pos.x)}, ${Math.floor(pos.y)})`, duration: 1 });
-
         if (this.state === 'playing' && !this.paused) {
             // Convert to world coordinates
             const worldPos = Utils.screenToWorld(pos.x, pos.y, this.camera);
@@ -299,8 +295,6 @@ class NarutoActionRPG {
             if (MapSystem.activeInteractZone && this.player) {
                 // When zone prompt is showing, any tap triggers interaction
                 this.lastTapInZone = MapSystem.activeInteractZone;
-                if (!this.notifications) this.notifications = [];
-                this.notifications.push({ message: 'Tap detected on zone!', duration: 2 });
                 return; // Don't set move target
             }
 
@@ -755,9 +749,6 @@ class NarutoActionRPG {
 
     openMissionSelect(npc) {
         // Handle both NPC-based and zone-based mission selection
-        if (!this.notifications) this.notifications = [];
-        this.notifications.push({ message: 'Inside openMissionSelect', duration: 3 });
-
         let mission;
 
         if (npc && npc.missions && npc.missions.length > 0) {
@@ -773,9 +764,7 @@ class NarutoActionRPG {
             };
         }
 
-        this.notifications.push({ message: 'Before showMissionSelectModal', duration: 3 });
         UISystem.showMissionSelectModal(mission, this);
-        this.notifications.push({ message: 'After showMissionSelectModal', duration: 3 });
     }
 }
 
