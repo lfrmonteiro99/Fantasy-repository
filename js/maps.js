@@ -13,20 +13,48 @@ const MapSystem = {
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
             // Crop coordinates for main village area only
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
-            // Walkable colors (beige/tan paths, green grass, brown bridges)
+            // Walkable colors (beige/tan paths, green grass, brown bridges, gray roads)
             walkableColors: [
-                { r: 200, g: 200, b: 170 },  // Beige/tan paths
-                { r: 210, g: 210, b: 180 },  // Light tan
-                { r: 180, g: 180, b: 150 },  // Darker tan
-                { r: 160, g: 200, b: 140 },  // Light green grass
-                { r: 140, g: 180, b: 120 },  // Green grass
-                { r: 120, g: 160, b: 100 },  // Darker green
-                { r: 100, g: 140, b: 80 },   // Dark green
-                { r: 180, g: 140, b: 100 },  // Brown bridges
-                { r: 160, g: 120, b: 80 },   // Darker brown
+                // Beige/tan paths (main roads)
+                { r: 200, g: 200, b: 170 },
+                { r: 210, g: 210, b: 180 },
+                { r: 220, g: 220, b: 190 },
+                { r: 230, g: 230, b: 200 },
+                { r: 180, g: 180, b: 150 },
+                { r: 190, g: 190, b: 160 },
                 { r: 220, g: 220, b: 200 },  // Very light tan/white paths
+                { r: 240, g: 240, b: 220 },  // Near white
+
+                // Green grass (side areas and paths)
+                { r: 160, g: 200, b: 140 },
+                { r: 150, g: 190, b: 130 },
+                { r: 140, g: 180, b: 120 },
+                { r: 130, g: 170, b: 110 },
+                { r: 120, g: 160, b: 100 },
+                { r: 110, g: 150, b: 90 },
+                { r: 100, g: 140, b: 80 },
+                { r: 90, g: 130, b: 70 },
+
+                // Brown bridges and dirt
+                { r: 180, g: 140, b: 100 },
+                { r: 170, g: 130, b: 90 },
+                { r: 160, g: 120, b: 80 },
+                { r: 150, g: 110, b: 70 },
+                { r: 140, g: 100, b: 60 },
+
+                // Gray/stone roads
+                { r: 150, g: 150, b: 150 },
+                { r: 160, g: 160, b: 160 },
+                { r: 170, g: 170, b: 170 },
+                { r: 180, g: 180, b: 180 },
+                { r: 190, g: 190, b: 190 },
+
+                // Yellow/sandy tones
+                { r: 200, g: 190, b: 150 },
+                { r: 210, g: 200, b: 160 },
+                { r: 190, g: 180, b: 140 },
             ],
-            walkableColorTolerance: 80, // Generous tolerance for color matching
+            walkableColorTolerance: 100, // Very generous tolerance for GIF compression artifacts
             playerSpawn: { x: 260, y: 260 }, // Center of map, will adjust to walkable area
             npcs: [],
             decorations: [],
