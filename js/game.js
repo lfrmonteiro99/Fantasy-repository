@@ -592,12 +592,19 @@ class NarutoActionRPG {
         if (!this.currentMap?.walkableInfo) return;
 
         const w = this.currentMap.walkableInfo;
+        const playerX = Math.floor(this.player?.x || 0);
+        const playerY = Math.floor(this.player?.y || 0);
+        const targetX = Math.floor(this.player?.targetX || 0);
+        const targetY = Math.floor(this.player?.targetY || 0);
+        const moving = this.player?.isMoving ? 'YES' : 'NO';
+
         const info = [
-            'WALKABLE AREA (Scaled Coords):',
-            `Scale: ${w.scaleX}x, ${w.scaleY}y`,
-            `From: (${w.scaledBounds.minX}, ${w.scaledBounds.minY})`,
-            `To: (${w.scaledBounds.maxX}, ${w.scaledBounds.maxY})`,
-            `Player: (${Math.floor(this.player?.x || 0)}, ${Math.floor(this.player?.y || 0)})`
+            'DEBUG INFO:',
+            `Player: (${playerX}, ${playerY})`,
+            `Target: (${targetX}, ${targetY})`,
+            `Moving: ${moving}`,
+            `Canvas: ${this.canvas.width}x${this.canvas.height}`,
+            `Scale: ${w.scaleX}x, ${w.scaleY}y`
         ];
 
         this.ctx.save();
