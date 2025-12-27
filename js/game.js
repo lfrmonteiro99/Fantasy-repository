@@ -295,6 +295,8 @@ class NarutoActionRPG {
             if (MapSystem.activeInteractZone && this.player) {
                 // When zone prompt is showing, any tap triggers interaction
                 this.lastTapInZone = MapSystem.activeInteractZone;
+                if (!this.notifications) this.notifications = [];
+                this.notifications.push({ text: 'Tap detected on zone!', duration: 2 });
                 return; // Don't set move target
             }
 

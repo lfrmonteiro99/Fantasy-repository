@@ -502,9 +502,10 @@ const MapSystem = {
 
                 // Handle interaction
                 const shouldInteract = (game.input && game.input.space) ||
-                                      (game.lastTapInZone === zone);
+                                      (game.lastTapInZone);
 
                 if (shouldInteract) {
+                    console.log('🎯 Interacting with zone:', zone.name);
                     this.interactWithZone(zone, game);
                     if (game.input) game.input.space = false;
                     game.lastTapInZone = null;
@@ -517,8 +518,13 @@ const MapSystem = {
 
     // Interact with zone
     interactWithZone(zone, game) {
+        // Show notification
+        if (!game.notifications) game.notifications = [];
+        game.notifications.push({ text: `Accessing ${zone.name}`, duration: 2 });
+
         if (zone.type === 'mission_log') {
             // Open mission select
+            game.notifications.push({ text: 'Opening mission select...', duration: 2 });
             game.openMissionSelect();
         }
 
