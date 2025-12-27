@@ -10,7 +10,7 @@ const MapSystem = {
             width: 1600,
             height: 1200,
             backgroundColor: '#2D5016',
-            playerSpawn: { x: 800, y: 600 },
+            playerSpawn: { x: 400, y: 300 },
             npcs: [
                 {
                     id: 'shop_keeper',
