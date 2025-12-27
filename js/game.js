@@ -755,6 +755,9 @@ class NarutoActionRPG {
 
     openMissionSelect(npc) {
         // Handle both NPC-based and zone-based mission selection
+        if (!this.notifications) this.notifications = [];
+        this.notifications.push({ message: 'Inside openMissionSelect', duration: 3 });
+
         let mission;
 
         if (npc && npc.missions && npc.missions.length > 0) {
@@ -770,7 +773,9 @@ class NarutoActionRPG {
             };
         }
 
+        this.notifications.push({ message: 'Before showMissionSelectModal', duration: 3 });
         UISystem.showMissionSelectModal(mission, this);
+        this.notifications.push({ message: 'After showMissionSelectModal', duration: 3 });
     }
 }
 

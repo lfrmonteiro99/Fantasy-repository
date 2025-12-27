@@ -505,8 +505,13 @@ const MapSystem = {
                                       (game.lastTapInZone);
 
                 if (shouldInteract) {
-                    console.log('🎯 Interacting with zone:', zone.name);
+                    if (!game.notifications) game.notifications = [];
+                    game.notifications.push({ message: 'shouldInteract = true', duration: 3 });
+
                     this.interactWithZone(zone, game);
+
+                    game.notifications.push({ message: 'After interactWithZone', duration: 3 });
+
                     if (game.input) game.input.space = false;
                     game.lastTapInZone = null;
                 }
@@ -524,8 +529,9 @@ const MapSystem = {
 
         if (zone.type === 'mission_log') {
             // Open mission select
-            game.notifications.push({ message: 'Opening mission select...', duration: 2 });
+            game.notifications.push({ message: 'Before openMissionSelect', duration: 3 });
             game.openMissionSelect();
+            game.notifications.push({ message: 'After openMissionSelect', duration: 3 });
         }
 
         AudioManager.playUI('click');
