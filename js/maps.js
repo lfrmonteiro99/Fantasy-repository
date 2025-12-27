@@ -520,11 +520,11 @@ const MapSystem = {
     interactWithZone(zone, game) {
         // Show notification
         if (!game.notifications) game.notifications = [];
-        game.notifications.push({ text: `Accessing ${zone.name}`, duration: 2 });
+        game.notifications.push({ message: `Accessing ${zone.name}`, duration: 2 });
 
         if (zone.type === 'mission_log') {
             // Open mission select
-            game.notifications.push({ text: 'Opening mission select...', duration: 2 });
+            game.notifications.push({ message: 'Opening mission select...', duration: 2 });
             game.openMissionSelect();
         }
 

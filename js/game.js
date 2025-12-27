@@ -263,6 +263,10 @@ class NarutoActionRPG {
         const pos = Utils.getInputPosition(e, this.canvas);
         this.input.mouse.down = true;
 
+        // Debug: show tap detected
+        if (!this.notifications) this.notifications = [];
+        this.notifications.push({ message: `Tap at (${Math.floor(pos.x)}, ${Math.floor(pos.y)})`, duration: 1 });
+
         if (this.state === 'playing' && !this.paused) {
             // Convert to world coordinates
             const worldPos = Utils.screenToWorld(pos.x, pos.y, this.camera);
@@ -296,7 +300,7 @@ class NarutoActionRPG {
                 // When zone prompt is showing, any tap triggers interaction
                 this.lastTapInZone = MapSystem.activeInteractZone;
                 if (!this.notifications) this.notifications = [];
-                this.notifications.push({ text: 'Tap detected on zone!', duration: 2 });
+                this.notifications.push({ message: 'Tap detected on zone!', duration: 2 });
                 return; // Don't set move target
             }
 
