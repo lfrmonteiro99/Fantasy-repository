@@ -750,6 +750,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 100;
+    transition: all 0.2s ease;
+}
+
+.hud-menu-btn:hover {
+    background: rgba(255,107,26,0.2);
+    transform: scale(1.05);
+}
+
+.hud-menu-btn:active {
+    transform: scale(0.95);
 }
 
 /* Modals */
