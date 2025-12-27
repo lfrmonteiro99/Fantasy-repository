@@ -130,14 +130,53 @@ class BuildingTrigger {
         this.triggered = false;
         this.cooldown = 0;
         this.showPrompt = false;
+        this.entranceSide = data.entranceSide || 'bottom'; // 'top', 'bottom', 'left', 'right'
 
-        // Define entrance zone (bottom part of building where player can enter)
-        this.entranceZone = {
-            x: x + width * 0.3,
-            y: y + height * 0.7,
-            width: width * 0.4,
-            height: height * 0.3
-        };
+        // Define entrance zone based on which side faces the road
+        this.entranceZone = this.calculateEntranceZone();
+    }
+
+    calculateEntranceZone() {
+        const zoneSize = 0.3; // 30% of building dimension
+
+        switch (this.entranceSide) {
+            case 'top':
+                return {
+                    x: this.x + this.width * 0.3,
+                    y: this.y,
+                    width: this.width * 0.4,
+                    height: this.height * zoneSize
+                };
+            case 'bottom':
+                return {
+                    x: this.x + this.width * 0.3,
+                    y: this.y + this.height * (1 - zoneSize),
+                    width: this.width * 0.4,
+                    height: this.height * zoneSize
+                };
+            case 'left':
+                return {
+                    x: this.x,
+                    y: this.y + this.height * 0.3,
+                    width: this.width * zoneSize,
+                    height: this.height * 0.4
+                };
+            case 'right':
+                return {
+                    x: this.x + this.width * (1 - zoneSize),
+                    y: this.y + this.height * 0.3,
+                    width: this.width * zoneSize,
+                    height: this.height * 0.4
+                };
+            default:
+                // Default to bottom
+                return {
+                    x: this.x + this.width * 0.3,
+                    y: this.y + this.height * 0.7,
+                    width: this.width * 0.4,
+                    height: this.height * 0.3
+                };
+        }
     }
 
     update(dt) {
@@ -413,74 +452,19 @@ class RoadSystem {
         const centerX = 400;
         const centerY = 300;
 
-        // Main horizontal road (west to east)
-        this.addRoad(centerX - 600, centerY - roadWidth / 2, 1200, roadWidth, 'horizontal');
+        // Main cross-shaped road network
+        // Horizontal road (west to east) - extended for full coverage
+        this.addRoad(centerX - 800, centerY - roadWidth / 2, 1600, roadWidth, 'horizontal');
 
-        // Vertical road (north to south)
-        this.addRoad(centerX - roadWidth / 2, centerY - 400, roadWidth, 800, 'vertical');
+        // Vertical road (north to south) - extended for full coverage
+        this.addRoad(centerX - roadWidth / 2, centerY - 500, roadWidth, 1000, 'vertical');
 
-        // Secondary horizontal road (upper)
-        this.addRoad(centerX - 400, centerY - 250 - roadWidth / 2, 800, roadWidth, 'horizontal');
-
-        // Secondary horizontal road (lower)
-        this.addRoad(centerX - 400, centerY + 250 - roadWidth / 2, 800, roadWidth, 'horizontal');
-
-        // Add intersections
+        // Center intersection
         this.addIntersection(centerX, centerY, roadWidth);
-        this.addIntersection(centerX, centerY - 250, roadWidth);
-        this.addIntersection(centerX, centerY + 250, roadWidth);
 
-        // Entrance paths to interactive buildings
-        const roadOffset = roadWidth / 2 + 20;
-        const entranceWidth = 60;
-
-        // Path to Mission Log (south side of main road)
-        const missionLogX = centerX + 100;
-        const missionLogEntranceY = centerY + roadWidth / 2;
-        this.addRoad(
-            missionLogX + (559 * 0.9) * 0.3,
-            missionLogEntranceY,
-            entranceWidth,
-            roadOffset,
-            'vertical'
-        );
-
-        // Path to Shop (north side of main road)
-        const shopX = centerX + 200;
-        const shopEntranceY = centerY - roadWidth / 2 - roadOffset - 137;
-        this.addRoad(
-            shopX + 213 * 0.3,
-            shopEntranceY + 137 * 0.7,
-            entranceWidth,
-            roadOffset,
-            'vertical'
-        );
-
-        // Path to Inn (south side of lower road)
-        const innX = centerX + 200;
-        const innEntranceY = centerY + 250 + roadWidth / 2;
-        this.addRoad(
-            innX + (213 * 0.9) * 0.3,
-            innEntranceY,
-            entranceWidth,
-            roadOffset,
-            'vertical'
-        );
-
-        // Path to Training Grounds (west side of vertical road)
-        const trainingX = centerX - roadOffset - 559 * 0.8;
-        const trainingY = centerY - 100;
-        const trainingWidth = 559 * 0.8;
-        const trainingHeight = 137 * 0.8;
-        this.addRoad(
-            trainingX + trainingWidth,
-            trainingY + trainingHeight * 0.7,
-            roadOffset,
-            entranceWidth,
-            'horizontal'
-        );
-
-        console.log('🛤️ Konoha village roads with entrance paths created');
+        console.log('🛤️ Konoha village roads created');
+        console.log(`   Main horizontal: Y=${centerY - roadWidth/2} to ${centerY + roadWidth/2}`);
+        console.log(`   Main vertical: X=${centerX - roadWidth/2} to ${centerX + roadWidth/2}`);
     }
 }
 

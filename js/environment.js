@@ -135,94 +135,101 @@ class EnvironmentManager {
         this.clear();
 
         const roadWidth = 120;
-        const roadOffset = roadWidth / 2 + 20; // Offset buildings from road edge
+        const roadTop = centerY - roadWidth / 2;      // Y = 240
+        const roadBottom = centerY + roadWidth / 2;   // Y = 360
+        const roadLeft = centerX - roadWidth / 2;     // X = 340
+        const roadRight = centerX + roadWidth / 2;    // X = 460
 
-        // Background buildings (far away, smaller)
-        this.addObject('bg_building_large', centerX - 400, centerY - 300, 0.6, 'background');
-        this.addObject('bg_building_small', centerX + 350, centerY - 250, 0.6, 'background');
+        // Interactive buildings positioned directly on roads
+        // Each building's entrance zone (bottom 30%) will overlap with the road
 
-        // Buildings along main horizontal road (Y=300)
-        // North side of road
-        this.addObject('house_small_1', centerX - 450, centerY - roadOffset - 137, 1, 'midground');
-        this.addObject('house_medium', centerX + 200, centerY - roadOffset - 137, 1, 'midground');
+        // 1. Mission Log (shop_large) - SOUTH side of horizontal road
+        const missionLogW = 559 * 0.9;
+        const missionLogH = 137 * 0.9;
+        const missionLogX = centerX + 50;
+        const missionLogY = roadBottom; // Building starts at road edge
+        this.addObject('shop_large', missionLogX, missionLogY, 0.9, 'midground');
 
-        // South side of road
-        this.addObject('house_small_2', centerX - 200, centerY + roadOffset, 1, 'midground');
-        this.addObject('shop_large', centerX + 100, centerY + roadOffset, 0.9, 'midground');
+        // 2. Shop (house_medium) - NORTH side of horizontal road
+        const shopW = 213;
+        const shopH = 137;
+        const shopX = centerX - 300;
+        const shopY = roadTop - shopH; // Building ends at road edge
+        this.addObject('house_medium', shopX, shopY, 1, 'midground');
 
-        // Buildings along upper horizontal road (Y=50)
-        // North side
-        this.addObject('house_medium', centerX - 300, centerY - 250 - roadOffset - 137, 0.9, 'midground');
+        // 3. Inn (house_medium) - EAST side of vertical road
+        const innW = 213 * 0.9;
+        const innH = 137 * 0.9;
+        const innX = roadRight; // Building starts at road edge
+        const innY = centerY + 100;
+        this.addObject('house_medium', innX, innY, 0.9, 'midground');
 
-        // South side
-        this.addObject('house_small_1', centerX + 150, centerY - 250 + roadOffset, 0.9, 'midground');
+        // 4. Training (shop_large) - WEST side of vertical road
+        const trainingW = 559 * 0.8;
+        const trainingH = 137 * 0.8;
+        const trainingX = roadLeft - trainingW; // Building ends at road edge
+        const trainingY = centerY - 150;
+        this.addObject('shop_large', trainingX, trainingY, 0.8, 'midground');
 
-        // Buildings along lower horizontal road (Y=550)
-        // North side
-        this.addObject('house_small_2', centerX - 350, centerY + 250 - roadOffset - 137, 0.9, 'midground');
+        // Decorative non-interactive buildings
+        this.addObject('house_small_1', centerX - 500, roadTop - 137, 1, 'midground');
+        this.addObject('house_small_2', centerX + 200, roadBottom, 1, 'midground');
+        this.addObject('bg_building_large', centerX - 400, centerY - 400, 0.6, 'background');
+        this.addObject('bg_building_small', centerX + 300, centerY - 350, 0.6, 'background');
 
-        // South side
-        this.addObject('house_medium', centerX + 200, centerY + 250 + roadOffset, 0.9, 'midground');
-
-        // Buildings along vertical road (X=400)
-        // West side - Training Grounds (moved closer to road)
-        this.addObject('shop_large', centerX - roadOffset - 559 * 0.8, centerY - 100, 0.8, 'midground');
-
-        // East side
-        this.addObject('house_small_1', centerX + roadOffset, centerY + 100, 0.9, 'midground');
-
-        // Foreground - props and decorations along roads
-        this.addObject('sign_post', centerX - 250, centerY - 30, 1, 'foreground');
-        this.addObject('sign_post', centerX + 180, centerY - 30, 1, 'foreground');
-        this.addObject('wooden_box_1', centerX - 100, centerY + roadOffset + 10, 1, 'foreground');
-        this.addObject('wooden_box_2', centerX - 130, centerY + roadOffset + 10, 1, 'foreground');
-        this.addObject('barrel_1', centerX + 50, centerY - roadOffset - 40, 1, 'foreground');
-        this.addObject('barrel_2', centerX + 80, centerY - roadOffset - 40, 1, 'foreground');
-        this.addObject('market_stall', centerX - 300, centerY + 30, 1, 'foreground');
-        this.addObject('bench', centerX - roadOffset - 100, centerY, 1, 'foreground');
-        this.addObject('bench', centerX + roadOffset + 10, centerY - 200, 1, 'foreground');
-        this.addObject('wooden_fence', centerX, centerY - 250 + roadOffset + 10, 1, 'foreground');
+        // Foreground - props and decorations
+        this.addObject('sign_post', centerX - 100, centerY - 80, 1, 'foreground');
+        this.addObject('sign_post', centerX + 100, centerY - 80, 1, 'foreground');
+        this.addObject('wooden_box_1', centerX - 50, roadBottom + 10, 1, 'foreground');
+        this.addObject('wooden_box_2', centerX - 80, roadBottom + 10, 1, 'foreground');
+        this.addObject('barrel_1', roadRight + 10, centerY - 50, 1, 'foreground');
+        this.addObject('barrel_2', roadRight + 10, centerY - 20, 1, 'foreground');
+        this.addObject('bench', roadLeft - 100, centerY, 1, 'foreground');
         this.addObject('stone_pillar', centerX, centerY, 1, 'foreground');
 
-        // Add building triggers (if Roads system is available)
+        // Add building triggers matching exact sprite positions
         if (typeof Roads !== 'undefined') {
-            // Mission Log building (large shop on south side of main road)
+            // 1. Mission Log - SOUTH of road, entrance faces north (top of building)
             Roads.addBuildingTrigger(
-                centerX + 100,
-                centerY + roadOffset,
-                559 * 0.9,
-                137 * 0.9,
-                'mission_log'
+                missionLogX,
+                missionLogY,
+                missionLogW,
+                missionLogH,
+                'mission_log',
+                { entranceSide: 'top' }
             );
 
-            // Shop building (house on north side)
+            // 2. Shop - NORTH of road, entrance faces south (bottom of building)
             Roads.addBuildingTrigger(
-                centerX + 200,
-                centerY - roadOffset - 137,
-                213,
-                137,
-                'shop'
+                shopX,
+                shopY,
+                shopW,
+                shopH,
+                'shop',
+                { entranceSide: 'bottom' }
             );
 
-            // Inn/Rest building (house on lower road)
+            // 3. Inn - EAST of road, entrance faces west (left of building)
             Roads.addBuildingTrigger(
-                centerX + 200,
-                centerY + 250 + roadOffset,
-                213 * 0.9,
-                137 * 0.9,
-                'inn'
+                innX,
+                innY,
+                innW,
+                innH,
+                'inn',
+                { entranceSide: 'left' }
             );
 
-            // Training grounds (west side building) - position matches sprite
+            // 4. Training - WEST of road, entrance faces east (right of building)
             Roads.addBuildingTrigger(
-                centerX - roadOffset - 559 * 0.8,
-                centerY - 100,
-                559 * 0.8,
-                137 * 0.8,
-                'training'
+                trainingX,
+                trainingY,
+                trainingW,
+                trainingH,
+                'training',
+                { entranceSide: 'right' }
             );
 
-            console.log('🏘️ Konoha village created with interactive buildings');
+            console.log('🏘️ Konoha village created with accessible interactive buildings');
         } else {
             console.log('🏘️ Konoha village created alongside roads');
         }
