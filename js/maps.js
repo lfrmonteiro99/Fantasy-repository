@@ -169,10 +169,17 @@ const MapSystem = {
             }
         }
 
-        // Center camera on player
+        // Center camera on player (or lock at 0,0 for fullscreen maps)
         if (game.camera && game.player) {
-            game.camera.x = game.player.x - game.canvas.width / 2;
-            game.camera.y = game.player.y - game.canvas.height / 2;
+            if (map.type === 'hub' && map.backgroundImage) {
+                // Lock camera at (0,0) for hub maps that fill the viewport
+                game.camera.x = 0;
+                game.camera.y = 0;
+            } else {
+                // Center camera on player for other maps
+                game.camera.x = game.player.x - game.canvas.width / 2;
+                game.camera.y = game.player.y - game.canvas.height / 2;
+            }
         }
 
         return true;
@@ -208,9 +215,13 @@ const MapSystem = {
 
         if (!imageData) return true; // No collision data, allow movement
 
-        // Convert world coordinates to map image coordinates
-        const mapX = Math.floor(x);
-        const mapY = Math.floor(y);
+        // Get scale factors (screen coords to original map coords)
+        const scaleX = this.currentMap.scaleX || 1;
+        const scaleY = this.currentMap.scaleY || 1;
+
+        // Convert scaled screen coordinates back to original map coordinates
+        const mapX = Math.floor(x / scaleX);
+        const mapY = Math.floor(y / scaleY);
 
         // Check bounds
         if (mapX < 0 || mapY < 0 || mapX >= imageData.width || mapY >= imageData.height) {
@@ -370,13 +381,24 @@ const MapSystem = {
     updateInteractionZones(game) {
         if (!game.player) return;
 
+        // Get scale factors
+        const scaleX = this.currentMap.scaleX || 1;
+        const scaleY = this.currentMap.scaleY || 1;
+
         for (let zone of this.currentMap.interactionZones) {
+            // Scale zone coordinates to match player's scaled coordinates
+            const scaledZoneX = zone.x * scaleX;
+            const scaledZoneY = zone.y * scaleY;
+            const scaledZoneWidth = zone.width * scaleX;
+            const scaledZoneHeight = zone.height * scaleY;
+            const scaledRange = zone.interactRange * Math.min(scaleX, scaleY);
+
             // Check if player is inside or near the zone
             const playerInZone =
-                game.player.x >= zone.x - zone.interactRange &&
-                game.player.x <= zone.x + zone.width + zone.interactRange &&
-                game.player.y >= zone.y - zone.interactRange &&
-                game.player.y <= zone.y + zone.height + zone.interactRange;
+                game.player.x >= scaledZoneX - scaledRange &&
+                game.player.x <= scaledZoneX + scaledZoneWidth + scaledRange &&
+                game.player.y >= scaledZoneY - scaledRange &&
+                game.player.y <= scaledZoneY + scaledZoneHeight + scaledRange;
 
             if (playerInZone) {
                 // Show interact prompt
@@ -440,16 +462,16 @@ const MapSystem = {
                     height: img.height
                 };
 
-                // Calculate camera offset
-                const offsetX = -camera.x + game.canvas.width / 2;
-                const offsetY = -camera.y + game.canvas.height / 2;
-
-                // Draw cropped portion of background image
+                // Draw cropped portion SCALED to fill entire viewport
                 ctx.drawImage(
                     img,
                     crop.x, crop.y, crop.width, crop.height,  // Source crop
-                    offsetX, offsetY, crop.width, crop.height  // Destination
+                    0, 0, game.canvas.width, game.canvas.height  // Fill entire viewport
                 );
+
+                // Store scale factors for collision detection
+                this.currentMap.scaleX = game.canvas.width / crop.width;
+                this.currentMap.scaleY = game.canvas.height / crop.height;
             } else {
                 // Fallback to solid color while image loads
                 ctx.fillStyle = this.currentMap.backgroundColor;
@@ -568,14 +590,25 @@ const MapSystem = {
     drawInteractionZone(ctx, zone, camera, game) {
         if (!game.player) return;
 
-        const screen = Utils.worldToScreen(zone.x, zone.y, camera);
+        // Get scale factors
+        const scaleX = this.currentMap.scaleX || 1;
+        const scaleY = this.currentMap.scaleY || 1;
+
+        // Scale zone coordinates to match viewport
+        const scaledZoneX = zone.x * scaleX;
+        const scaledZoneY = zone.y * scaleY;
+        const scaledZoneWidth = zone.width * scaleX;
+        const scaledZoneHeight = zone.height * scaleY;
+        const scaledRange = zone.interactRange * Math.min(scaleX, scaleY);
+
+        const screen = Utils.worldToScreen(scaledZoneX, scaledZoneY, camera);
 
         // Check if player is near
         const playerInZone =
-            game.player.x >= zone.x - zone.interactRange &&
-            game.player.x <= zone.x + zone.width + zone.interactRange &&
-            game.player.y >= zone.y - zone.interactRange &&
-            game.player.y <= zone.y + zone.height + zone.interactRange;
+            game.player.x >= scaledZoneX - scaledRange &&
+            game.player.x <= scaledZoneX + scaledZoneWidth + scaledRange &&
+            game.player.y >= scaledZoneY - scaledRange &&
+            game.player.y <= scaledZoneY + scaledZoneHeight + scaledRange;
 
         if (playerInZone) {
             // Draw highlight box
@@ -584,7 +617,7 @@ const MapSystem = {
             ctx.globalAlpha = pulse * 0.5;
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 3;
-            ctx.strokeRect(screen.x, screen.y, zone.width, zone.height);
+            ctx.strokeRect(screen.x, screen.y, scaledZoneWidth, scaledZoneHeight);
             ctx.globalAlpha = 1.0;
             ctx.restore();
         }

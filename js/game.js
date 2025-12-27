@@ -477,17 +477,25 @@ class NarutoActionRPG {
         if (!this.player) return;
 
         // Target camera position (centered on player)
-        const targetX = this.player.x - this.canvas.width / 2;
-        const targetY = this.player.y - this.canvas.height / 2;
+        // Lock camera for fullscreen hub maps, move for others
+        if (this.currentMap && this.currentMap.type === 'hub' && this.currentMap.backgroundImage) {
+            // Keep camera locked at (0,0) for fullscreen hub maps
+            this.camera.x = 0;
+            this.camera.y = 0;
+        } else {
+            // Normal camera follow for other maps
+            const targetX = this.player.x - this.canvas.width / 2;
+            const targetY = this.player.y - this.canvas.height / 2;
 
-        // Smooth camera movement
-        this.camera.x += (targetX - this.camera.x) * this.camera.smoothing;
-        this.camera.y += (targetY - this.camera.y) * this.camera.smoothing;
+            // Smooth camera movement
+            this.camera.x += (targetX - this.camera.x) * this.camera.smoothing;
+            this.camera.y += (targetY - this.camera.y) * this.camera.smoothing;
 
-        // Keep camera in map bounds
-        if (this.currentMap) {
-            this.camera.x = Utils.clamp(this.camera.x, 0, Math.max(0, this.currentMap.width - this.canvas.width));
-            this.camera.y = Utils.clamp(this.camera.y, 0, Math.max(0, this.currentMap.height - this.canvas.height));
+            // Keep camera in map bounds
+            if (this.currentMap) {
+                this.camera.x = Utils.clamp(this.camera.x, 0, Math.max(0, this.currentMap.width - this.canvas.width));
+                this.camera.y = Utils.clamp(this.camera.y, 0, Math.max(0, this.currentMap.height - this.canvas.height));
+            }
         }
     }
 
