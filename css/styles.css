@@ -1079,9 +1079,10 @@ body {
 
 /* Desktop Overrides */
 @media (min-width: 768px) {
-    .mobile-only {
+    /* Joystick now visible on all devices for testing/gameplay */
+    /* .mobile-only {
         display: none;
-    }
+    } */
 
     .abilities-container {
         bottom: 30px;
