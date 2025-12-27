@@ -215,6 +215,78 @@ const MapSystem = {
         this.collisionMaps[mapId] = imageData;
 
         console.log(`🗺️ Collision map created for ${mapId}: ${crop.width}x${crop.height}`);
+
+        // Log walkable area analysis
+        this.analyzeWalkableAreas(mapId, imageData);
+    },
+
+    // Analyze and log walkable areas
+    analyzeWalkableAreas(mapId, imageData) {
+        console.log('\n🚶 WALKABLE AREA ANALYSIS (Original Map Coordinates 520×520):');
+
+        // Sample grid to find walkable areas
+        const sampleSize = 20; // Sample every 20 pixels
+        const walkableRegions = [];
+
+        for (let y = 0; y < imageData.height; y += sampleSize) {
+            for (let x = 0; x < imageData.width; x += sampleSize) {
+                const index = (y * imageData.width + x) * 4;
+                const r = imageData.data[index];
+                const g = imageData.data[index + 1];
+                const b = imageData.data[index + 2];
+                const a = imageData.data[index + 3];
+
+                // Check if walkable
+                const walkableColors = this.currentMap.walkableColors || [];
+                const tolerance = this.currentMap.walkableColorTolerance || 30;
+                let isWalkable = false;
+
+                for (const color of walkableColors) {
+                    if (Math.abs(r - color.r) <= tolerance &&
+                        Math.abs(g - color.g) <= tolerance &&
+                        Math.abs(b - color.b) <= tolerance &&
+                        a > 128) {
+                        isWalkable = true;
+                        break;
+                    }
+                }
+
+                if (isWalkable) {
+                    walkableRegions.push({ x, y, r, g, b });
+                }
+            }
+        }
+
+        console.log(`   Found ${walkableRegions.length} walkable sample points`);
+        console.log('   Walkable coordinates in ORIGINAL map (520×520):');
+        console.log(`   - Top-left walkable: (${Math.min(...walkableRegions.map(r => r.x))}, ${Math.min(...walkableRegions.map(r => r.y))})`);
+        console.log(`   - Bottom-right walkable: (${Math.max(...walkableRegions.map(r => r.x))}, ${Math.max(...walkableRegions.map(r => r.y))})`);
+
+        // Show scaled coordinates
+        const scaleX = this.currentMap.scaleX || 1;
+        const scaleY = this.currentMap.scaleY || 1;
+        console.log('\n   Walkable coordinates in SCALED viewport:');
+        console.log(`   - Scale factors: X=${scaleX.toFixed(2)}, Y=${scaleY.toFixed(2)}`);
+        console.log(`   - Top-left walkable: (${Math.floor(Math.min(...walkableRegions.map(r => r.x)) * scaleX)}, ${Math.floor(Math.min(...walkableRegions.map(r => r.y)) * scaleY)})`);
+        console.log(`   - Bottom-right walkable: (${Math.floor(Math.max(...walkableRegions.map(r => r.x)) * scaleX)}, ${Math.floor(Math.max(...walkableRegions.map(r => r.y)) * scaleY)})`);
+
+        // Sample some walkable areas by region
+        console.log('\n   Sample walkable zones (SCALED coordinates):');
+        const regions = {
+            'Top-Left': walkableRegions.filter(r => r.x < 130 && r.y < 130),
+            'Top-Right': walkableRegions.filter(r => r.x > 390 && r.y < 130),
+            'Bottom-Left': walkableRegions.filter(r => r.x < 130 && r.y > 390),
+            'Bottom-Right': walkableRegions.filter(r => r.x > 390 && r.y > 390),
+            'Center': walkableRegions.filter(r => r.x > 200 && r.x < 320 && r.y > 200 && r.y < 320)
+        };
+
+        for (const [name, points] of Object.entries(regions)) {
+            if (points.length > 0) {
+                const sample = points[0];
+                console.log(`   - ${name}: (${Math.floor(sample.x * scaleX)}, ${Math.floor(sample.y * scaleY)}) RGB(${sample.r},${sample.g},${sample.b})`);
+            }
+        }
+        console.log('\n');
     },
 
     // Check if a position is walkable
