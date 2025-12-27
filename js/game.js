@@ -609,14 +609,14 @@ class NarutoActionRPG {
 
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.fillRect(10, 60, 320, 140);
+        this.ctx.fillRect(10, 200, 320, 140);
 
         this.ctx.strokeStyle = '#00FF00';
         this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(10, 60, 320, 140);
+        this.ctx.strokeRect(10, 200, 320, 140);
 
         info.forEach((line, index) => {
-            Utils.drawText(this.ctx, line, 20, 80 + index * 22, {
+            Utils.drawText(this.ctx, line, 20, 220 + index * 22, {
                 font: index === 0 ? 'bold 14px monospace' : '14px monospace',
                 color: index === 0 ? '#FFD700' : '#00FF00'
             });
