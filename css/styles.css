@@ -477,10 +477,10 @@ body {
 .abilities-wrapper {
     position: absolute;
     bottom: max(10px, env(safe-area-inset-bottom));
-    left: max(10px, env(safe-area-inset-left));
+    right: max(10px, env(safe-area-inset-right));
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 10px;
 }
 
@@ -1093,7 +1093,7 @@ body {
 
     .abilities-wrapper {
         bottom: 30px;
-        left: 30px;
+        right: 30px;
         gap: 15px;
     }
 
