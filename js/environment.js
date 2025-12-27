@@ -141,43 +141,35 @@ class EnvironmentManager {
         const roadLeft = centerX - roadWidth / 2;     // X = 340
         const roadRight = centerX + roadWidth / 2;    // X = 460
 
-        // STEP 2: Position 4 interactive buildings - one in EACH quadrant of the + shape
-        // Buildings positioned so their entrance zones are ON the roads
+        // STEP 2: Position buildings FAR from center, spread along roads
+        // Each building way out from center for clear visual separation
 
-        // NORTHEAST QUADRANT - Mission Log (shop_large)
-        // On EAST side of vertical road, entrance faces WEST (left)
-        const missionLogW = 559 * 0.9;  // 503px
-        const missionLogH = 137 * 0.9;  // 123px
-        const missionLogEntranceW = missionLogW * 0.3; // 151px
-        const missionLogX = roadRight; // Start at road edge
-        const missionLogY = centerY - 200;
+        // MISSION LOG - Far RIGHT on horizontal road
+        const missionLogW = 559 * 0.9;
+        const missionLogH = 137 * 0.9;
+        const missionLogX = centerX + 300;  // Far right
+        const missionLogY = roadBottom;     // South of road
         this.addObject('shop_large', missionLogX, missionLogY, 0.9, 'midground');
 
-        // NORTHWEST QUADRANT - Shop (house_medium)
-        // On WEST side of vertical road, entrance faces EAST (right)
+        // SHOP - Far LEFT on horizontal road
         const shopW = 213;
         const shopH = 137;
-        const shopEntranceW = shopW * 0.3; // 64px
-        const shopX = roadLeft - shopW; // End at road edge
-        const shopY = centerY - 200;
+        const shopX = centerX - 500;        // Far left
+        const shopY = roadTop - shopH;      // North of road
         this.addObject('house_medium', shopX, shopY, 1, 'midground');
 
-        // SOUTHEAST QUADRANT - Inn (house_medium)
-        // On SOUTH side of horizontal road, entrance faces NORTH (top)
-        const innW = 213 * 0.9;  // 192px
-        const innH = 137 * 0.9;  // 123px
-        const innEntranceH = innH * 0.3; // 37px
-        const innX = centerX + 150;
-        const innY = roadBottom; // Start at road edge
+        // INN - Far DOWN on vertical road
+        const innW = 213 * 0.9;
+        const innH = 137 * 0.9;
+        const innX = roadLeft - innW;       // West of road
+        const innY = centerY + 200;         // Far down
         this.addObject('house_medium', innX, innY, 0.9, 'midground');
 
-        // SOUTHWEST QUADRANT - Training (house_small_1)
-        // On NORTH side of horizontal road, entrance faces SOUTH (bottom)
-        const trainingW = 315;  // house_small_1
+        // TRAINING - Far UP on vertical road
+        const trainingW = 315;
         const trainingH = 137;
-        const trainingEntranceH = trainingH * 0.3; // 41px
-        const trainingX = centerX - 350;
-        const trainingY = roadTop - trainingH; // End at road edge
+        const trainingX = roadRight;        // East of road
+        const trainingY = centerY - 300;    // Far up
         this.addObject('house_small_1', trainingX, trainingY, 1, 'midground');
 
         // Decorative buildings in far corners
@@ -194,44 +186,44 @@ class EnvironmentManager {
 
         // Add building triggers matching exact sprite positions
         if (typeof Roads !== 'undefined') {
-            // NORTHEAST - Mission Log, entrance faces WEST (left)
+            // Mission Log - Far RIGHT, south of horizontal road, entrance faces UP (top)
             Roads.addBuildingTrigger(
                 missionLogX,
                 missionLogY,
                 missionLogW,
                 missionLogH,
                 'mission_log',
-                { entranceSide: 'left' }
+                { entranceSide: 'top' }
             );
 
-            // NORTHWEST - Shop, entrance faces EAST (right)
+            // Shop - Far LEFT, north of horizontal road, entrance faces DOWN (bottom)
             Roads.addBuildingTrigger(
                 shopX,
                 shopY,
                 shopW,
                 shopH,
                 'shop',
-                { entranceSide: 'right' }
+                { entranceSide: 'bottom' }
             );
 
-            // SOUTHEAST - Inn, entrance faces NORTH (top)
+            // Inn - Far DOWN, west of vertical road, entrance faces RIGHT (right)
             Roads.addBuildingTrigger(
                 innX,
                 innY,
                 innW,
                 innH,
                 'inn',
-                { entranceSide: 'top' }
+                { entranceSide: 'right' }
             );
 
-            // SOUTHWEST - Training, entrance faces SOUTH (bottom)
+            // Training - Far UP, east of vertical road, entrance faces LEFT (left)
             Roads.addBuildingTrigger(
                 trainingX,
                 trainingY,
                 trainingW,
                 trainingH,
                 'training',
-                { entranceSide: 'bottom' }
+                { entranceSide: 'left' }
             );
 
             console.log('🏘️ Konoha village created with accessible interactive buildings');
