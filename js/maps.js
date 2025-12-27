@@ -132,6 +132,18 @@ const MapSystem = {
         this.currentMap = { ...map };
         game.currentMap = this.currentMap;
 
+        // Calculate scale factors FIRST for fullscreen hub maps
+        if (map.type === 'hub' && map.backgroundImage && map.imageCrop) {
+            const crop = map.imageCrop;
+            this.currentMap.scaleX = game.canvas.width / crop.width;
+            this.currentMap.scaleY = game.canvas.height / crop.height;
+        }
+
+        // Reset map state
+        this.missionCompleted = false;
+        this.hiddenMist = false;
+        this.hiddenMistAlpha = 0;
+
         // Load background image if specified
         if (map.backgroundImage && !this.loadedImages[map.backgroundImage]) {
             const img = new Image();
@@ -152,15 +164,13 @@ const MapSystem = {
             }
         }
 
-        // Reset map state
-        this.missionCompleted = false;
-        this.hiddenMist = false;
-        this.hiddenMistAlpha = 0;
-
-        // Spawn player
+        // Spawn player at SCALED coordinates
         if (game.player) {
-            game.player.x = map.playerSpawn.x;
-            game.player.y = map.playerSpawn.y;
+            const scaleX = this.currentMap.scaleX || 1;
+            const scaleY = this.currentMap.scaleY || 1;
+
+            game.player.x = map.playerSpawn.x * scaleX;
+            game.player.y = map.playerSpawn.y * scaleY;
             game.player.targetX = game.player.x;
             game.player.targetY = game.player.y;
         }
