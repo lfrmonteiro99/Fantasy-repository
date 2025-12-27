@@ -467,6 +467,9 @@ const MapSystem = {
     updateInteractionZones(game) {
         if (!game.player) return;
 
+        // Reset active zone
+        this.activeInteractZone = null;
+
         // Get scale factors
         const scaleX = this.currentMap.scaleX || 1;
         const scaleY = this.currentMap.scaleY || 1;
@@ -487,6 +490,9 @@ const MapSystem = {
                 game.player.y <= scaledZoneY + scaledZoneHeight + scaledRange;
 
             if (playerInZone) {
+                // Mark zone as active
+                this.activeInteractZone = zone;
+
                 // Show interact prompt
                 const isMobile = window.isMobileDevice || false;
                 const message = isMobile
