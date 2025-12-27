@@ -129,6 +129,15 @@ class BuildingTrigger {
         this.data = data;
         this.triggered = false;
         this.cooldown = 0;
+        this.showPrompt = false;
+
+        // Define entrance zone (bottom part of building where player can enter)
+        this.entranceZone = {
+            x: x + width * 0.3,
+            y: y + height * 0.7,
+            width: width * 0.4,
+            height: height * 0.3
+        };
     }
 
     update(dt) {
@@ -137,13 +146,29 @@ class BuildingTrigger {
         }
     }
 
-    isNearby(px, py, radius = 80) {
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
-        const dx = px - centerX;
-        const dy = py - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < radius;
+    // Check if player is inside the building sprite bounds
+    isInsideBuilding(px, py) {
+        return px >= this.x &&
+               px <= this.x + this.width &&
+               py >= this.y &&
+               py <= this.y + this.height;
+    }
+
+    // Check if player is in the entrance zone (bottom part of building)
+    isInEntranceZone(px, py) {
+        return px >= this.entranceZone.x &&
+               px <= this.entranceZone.x + this.entranceZone.width &&
+               py >= this.entranceZone.y &&
+               py <= this.entranceZone.y + this.entranceZone.height;
+    }
+
+    // Check if player is near enough to see the prompt
+    isNearby(px, py) {
+        const buffer = 50;
+        return px >= this.x - buffer &&
+               px <= this.x + this.width + buffer &&
+               py >= this.y - buffer &&
+               py <= this.y + this.height + buffer;
     }
 
     trigger(game) {
@@ -223,15 +248,46 @@ class BuildingTrigger {
         // TODO: Open training UI
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, game) {
         const screen = Utils.worldToScreen(this.x, this.y, camera);
 
-        // Draw trigger zone for debugging
-        if (false) { // Set to true to see trigger zones
+        // Draw entrance indicator when player is nearby
+        if (this.showPrompt && game && game.player) {
             ctx.save();
-            ctx.strokeStyle = 'rgba(255, 107, 26, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(screen.x, screen.y, this.width, this.height);
+
+            // Draw entrance zone highlight
+            const entranceScreen = Utils.worldToScreen(
+                this.entranceZone.x,
+                this.entranceZone.y,
+                camera
+            );
+
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.fillRect(
+                entranceScreen.x,
+                entranceScreen.y,
+                this.entranceZone.width,
+                this.entranceZone.height
+            );
+
+            // Draw "Enter" prompt above building
+            const centerScreen = Utils.worldToScreen(
+                this.x + this.width / 2,
+                this.y - 10,
+                camera
+            );
+
+            // Prompt background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(centerScreen.x - 35, centerScreen.y - 15, 70, 25);
+
+            // Prompt text
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('↓ ENTER', centerScreen.x, centerScreen.y - 3);
+
             ctx.restore();
         }
     }
@@ -313,9 +369,16 @@ class RoadSystem {
         for (const trigger of this.buildingTriggers) {
             trigger.update(dt);
 
-            // Check if player is nearby
-            if (game.player && trigger.isNearby(game.player.x, game.player.y)) {
-                // Auto-trigger on approach (could also require button press)
+            if (!game.player) continue;
+
+            const playerX = game.player.x;
+            const playerY = game.player.y;
+
+            // Show prompt when player is nearby
+            trigger.showPrompt = trigger.isNearby(playerX, playerY);
+
+            // Only trigger when player enters the entrance zone
+            if (trigger.isInEntranceZone(playerX, playerY)) {
                 if (!trigger.triggered || trigger.cooldown <= 0) {
                     trigger.trigger(game);
                 }
@@ -325,7 +388,7 @@ class RoadSystem {
         }
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, game) {
         // Draw intersections first
         for (const intersection of this.intersections) {
             intersection.draw(ctx, camera);
@@ -336,9 +399,9 @@ class RoadSystem {
             road.draw(ctx, camera);
         }
 
-        // Draw building triggers (for debugging)
+        // Draw building triggers (entrance prompts)
         for (const trigger of this.buildingTriggers) {
-            trigger.draw(ctx, camera);
+            trigger.draw(ctx, camera, game);
         }
     }
 
@@ -367,7 +430,57 @@ class RoadSystem {
         this.addIntersection(centerX, centerY - 250, roadWidth);
         this.addIntersection(centerX, centerY + 250, roadWidth);
 
-        console.log('🛤️ Konoha village roads created');
+        // Entrance paths to interactive buildings
+        const roadOffset = roadWidth / 2 + 20;
+        const entranceWidth = 60;
+
+        // Path to Mission Log (south side of main road)
+        const missionLogX = centerX + 100;
+        const missionLogEntranceY = centerY + roadWidth / 2;
+        this.addRoad(
+            missionLogX + (559 * 0.9) * 0.3,
+            missionLogEntranceY,
+            entranceWidth,
+            roadOffset,
+            'vertical'
+        );
+
+        // Path to Shop (north side of main road)
+        const shopX = centerX + 200;
+        const shopEntranceY = centerY - roadWidth / 2 - roadOffset - 137;
+        this.addRoad(
+            shopX + 213 * 0.3,
+            shopEntranceY + 137 * 0.7,
+            entranceWidth,
+            roadOffset,
+            'vertical'
+        );
+
+        // Path to Inn (south side of lower road)
+        const innX = centerX + 200;
+        const innEntranceY = centerY + 250 + roadWidth / 2;
+        this.addRoad(
+            innX + (213 * 0.9) * 0.3,
+            innEntranceY,
+            entranceWidth,
+            roadOffset,
+            'vertical'
+        );
+
+        // Path to Training Grounds (west side of vertical road)
+        const trainingX = centerX - roadOffset - 559 * 0.8;
+        const trainingY = centerY - 100;
+        const trainingWidth = 559 * 0.8;
+        const trainingHeight = 137 * 0.8;
+        this.addRoad(
+            trainingX + trainingWidth,
+            trainingY + trainingHeight * 0.7,
+            roadOffset,
+            entranceWidth,
+            'horizontal'
+        );
+
+        console.log('🛤️ Konoha village roads with entrance paths created');
     }
 }
 

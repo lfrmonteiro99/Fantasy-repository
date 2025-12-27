@@ -165,8 +165,8 @@ class EnvironmentManager {
         this.addObject('house_medium', centerX + 200, centerY + 250 + roadOffset, 0.9, 'midground');
 
         // Buildings along vertical road (X=400)
-        // West side
-        this.addObject('shop_large', centerX - roadOffset - 559, centerY - 100, 0.8, 'midground');
+        // West side - Training Grounds (moved closer to road)
+        this.addObject('shop_large', centerX - roadOffset - 559 * 0.8, centerY - 100, 0.8, 'midground');
 
         // East side
         this.addObject('house_small_1', centerX + roadOffset, centerY + 100, 0.9, 'midground');
@@ -213,9 +213,9 @@ class EnvironmentManager {
                 'inn'
             );
 
-            // Training grounds (west side building)
+            // Training grounds (west side building) - position matches sprite
             Roads.addBuildingTrigger(
-                centerX - roadOffset - 559,
+                centerX - roadOffset - 559 * 0.8,
                 centerY - 100,
                 559 * 0.8,
                 137 * 0.8,

@@ -508,8 +508,8 @@ class NarutoActionRPG {
             // Draw map
             MapSystem.draw(this.ctx, this);
 
-            // Draw roads (brick paths)
-            Roads.draw(this.ctx, this.camera);
+            // Draw roads (brick paths with entrance indicators)
+            Roads.draw(this.ctx, this.camera, this);
 
             // Draw environment background layer (far background buildings)
             Environment.drawLayer(this.ctx, this.camera, 'background');
