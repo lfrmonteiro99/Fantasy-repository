@@ -197,8 +197,13 @@ const MapSystem = {
             const scaleX = this.currentMap.scaleX || 1;
             const scaleY = this.currentMap.scaleY || 1;
 
-            game.player.x = map.playerSpawn.x * scaleX;
-            game.player.y = map.playerSpawn.y * scaleY;
+            let spawnX = map.playerSpawn.x * scaleX;
+            let spawnY = map.playerSpawn.y * scaleY;
+
+            // Ensure spawn point is walkable (for maps with collision)
+            const walkablePos = this.findNearestWalkablePosition(spawnX, spawnY);
+            game.player.x = walkablePos.x;
+            game.player.y = walkablePos.y;
             game.player.targetX = game.player.x;
             game.player.targetY = game.player.y;
         }
@@ -324,11 +329,34 @@ const MapSystem = {
         console.log('\n🚶 ' + message.replace(/\n/g, '\n   '));
     },
 
+    // Find nearest walkable position (spiral search)
+    findNearestWalkablePosition(x, y, maxRadius = 100) {
+        // Check if current position is already walkable
+        if (this.isWalkable(x, y)) {
+            return { x, y };
+        }
+
+        // Spiral search outward
+        for (let radius = 5; radius <= maxRadius; radius += 5) {
+            const steps = radius * 8; // More steps for smoother spiral
+            for (let i = 0; i < steps; i++) {
+                const angle = (Math.PI * 2 * i) / steps;
+                const testX = x + Math.cos(angle) * radius;
+                const testY = y + Math.sin(angle) * radius;
+
+                if (this.isWalkable(testX, testY)) {
+                    return { x: testX, y: testY };
+                }
+            }
+        }
+
+        // Fallback: return original position
+        console.warn('Could not find walkable position near', x, y);
+        return { x, y };
+    },
+
     // Check if a position is walkable
     isWalkable(x, y) {
-        // TEMPORARY: Disable all collision for testing
-        return true;
-
         if (!this.currentMap) return true;
 
         const mapId = this.currentMap.id;
