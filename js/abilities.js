@@ -41,7 +41,11 @@ const AbilitySystem = {
                         owner: player,
                         target: null,
                         attackCooldown: 0,
-                        attackRate: 1.5
+                        attackRate: 1.5,
+                        // Copy player's sprite information
+                        spriteSheet: player.spriteSheet,
+                        currentAnimation: player.animations?.idle || null,
+                        facingAngle: player.facingAngle || 0
                     };
 
                     if (!game.projectiles) game.projectiles = [];
@@ -485,6 +489,9 @@ const AbilitySystem = {
             clone.vx = Math.cos(angle) * speed;
             clone.vy = Math.sin(angle) * speed;
 
+            // Update facing direction for sprite
+            clone.facingAngle = angle;
+
             // Attack if close enough
             if (nearestDistance <= clone.radius + nearestEnemy.radius + 30) {
                 clone.attackCooldown -= dt;
@@ -500,6 +507,16 @@ const AbilitySystem = {
             clone.vx *= 0.9;
             clone.vy *= 0.9;
         }
+
+        // Update animation (walk when moving, idle when still)
+        if (clone.currentAnimation) {
+            const isMoving = Math.abs(clone.vx) > 1 || Math.abs(clone.vy) > 1;
+            if (isMoving && clone.owner?.animations?.walk) {
+                clone.currentAnimation = clone.owner.animations.walk;
+            } else if (!isMoving && clone.owner?.animations?.idle) {
+                clone.currentAnimation = clone.owner.animations.idle;
+            }
+        }
     },
 
     // Draw projectiles
@@ -512,17 +529,39 @@ const AbilitySystem = {
             ctx.save();
 
             if (proj.type === 'shadow_clone') {
-                // Draw shadow clone
-                ctx.fillStyle = '#FFD700';
-                ctx.globalAlpha = 0.8;
-                Utils.drawCircle(ctx, screen.x, screen.y, proj.radius, '#FF6B1A', true);
-                ctx.globalAlpha = 1.0;
-                Utils.drawCircle(ctx, screen.x, screen.y, proj.radius * 0.6, '#FFD700', true);
-                Utils.drawText(ctx, 'C', screen.x, screen.y - 5, {
-                    align: 'center',
-                    font: 'bold 20px Arial',
-                    color: '#000000'
-                });
+                // Draw shadow clone using player sprite if available
+                if (proj.currentAnimation && proj.spriteSheet) {
+                    const spriteWidth = 90;
+                    const spriteHeight = 90;
+                    const drawX = Math.floor(screen.x - spriteWidth/2);
+                    const drawY = Math.floor(screen.y - 89);
+
+                    // Slight transparency to differentiate from real player
+                    ctx.globalAlpha = 0.85;
+
+                    // Flip sprite based on facing direction
+                    const flipX = proj.facingAngle > Math.PI/2 && proj.facingAngle < 3*Math.PI/2;
+                    if (flipX) {
+                        ctx.translate(drawX + spriteWidth, drawY);
+                        ctx.scale(-1, 1);
+                        ctx.translate(-(drawX), -drawY);
+                    }
+
+                    proj.currentAnimation.draw(ctx, drawX, drawY, spriteWidth, spriteHeight, flipX);
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    // Fallback to circle if no sprite
+                    ctx.fillStyle = '#FFD700';
+                    ctx.globalAlpha = 0.8;
+                    Utils.drawCircle(ctx, screen.x, screen.y, proj.radius, '#FF6B1A', true);
+                    ctx.globalAlpha = 1.0;
+                    Utils.drawCircle(ctx, screen.x, screen.y, proj.radius * 0.6, '#FFD700', true);
+                    Utils.drawText(ctx, 'C', screen.x, screen.y - 5, {
+                        align: 'center',
+                        font: 'bold 20px Arial',
+                        color: '#000000'
+                    });
+                }
             } else if (proj.type === 'rasengan') {
                 // Draw spiraling rasengan
                 const alpha = 1 - (proj.age / proj.lifetime) * 0.3;
