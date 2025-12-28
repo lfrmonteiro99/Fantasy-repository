@@ -18,7 +18,7 @@ const MapSystem = {
                 // Main horizontal path
                 { x: 162, y: 310, width: 1429, height: 60 }, // (162,310) to (1591,370)
                 // Vertical connection
-                { x: 729, y: 297, width: 162, height: 28 }  // (729,297) to (891,325)
+                { x: 729, y: 297, width: 152, height: 28 }  // (729,297) to (881,325)
             ],
             playerSpawn: { x: 260, y: 340 }, // Center of main path
             npcs: [],
@@ -229,8 +229,8 @@ const MapSystem = {
                 return true;
             }
 
-            // Rectangle 2: Vertical connection (729,297) to (891,325)
-            if (x >= 729 && x <= 891 && y >= 297 && y <= 325) {
+            // Rectangle 2: Vertical connection (729,297) to (881,325)
+            if (x >= 729 && x <= 881 && y >= 297 && y <= 325) {
                 return true;
             }
 
