@@ -13,49 +13,14 @@ const MapSystem = {
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
             // Crop coordinates for main village area only
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
-            // Walkable colors (beige/tan paths, green grass, brown bridges, gray roads)
-            walkableColors: [
-                // Beige/tan paths (main roads)
-                { r: 200, g: 200, b: 170 },
-                { r: 210, g: 210, b: 180 },
-                { r: 220, g: 220, b: 190 },
-                { r: 230, g: 230, b: 200 },
-                { r: 180, g: 180, b: 150 },
-                { r: 190, g: 190, b: 160 },
-                { r: 220, g: 220, b: 200 },  // Very light tan/white paths
-                { r: 240, g: 240, b: 220 },  // Near white
-
-                // Green grass (side areas and paths)
-                { r: 160, g: 200, b: 140 },
-                { r: 150, g: 190, b: 130 },
-                { r: 140, g: 180, b: 120 },
-                { r: 130, g: 170, b: 110 },
-                { r: 120, g: 160, b: 100 },
-                { r: 110, g: 150, b: 90 },
-                { r: 100, g: 140, b: 80 },
-                { r: 90, g: 130, b: 70 },
-
-                // Brown bridges and dirt
-                { r: 180, g: 140, b: 100 },
-                { r: 170, g: 130, b: 90 },
-                { r: 160, g: 120, b: 80 },
-                { r: 150, g: 110, b: 70 },
-                { r: 140, g: 100, b: 60 },
-
-                // Gray/stone roads
-                { r: 150, g: 150, b: 150 },
-                { r: 160, g: 160, b: 160 },
-                { r: 170, g: 170, b: 170 },
-                { r: 180, g: 180, b: 180 },
-                { r: 190, g: 190, b: 190 },
-
-                // Yellow/sandy tones
-                { r: 200, g: 190, b: 150 },
-                { r: 210, g: 200, b: 160 },
-                { r: 190, g: 180, b: 140 },
+            // Walkable rectangular zones (in original map coordinates)
+            walkableZones: [
+                // Main horizontal path
+                { x: 162, y: 310, width: 1429, height: 60 }, // (162,310) to (1591,370)
+                // Vertical connection
+                { x: 729, y: 297, width: 162, height: 28 }  // (729,297) to (891,325)
             ],
-            walkableColorTolerance: 100, // Very generous tolerance for GIF compression artifacts
-            playerSpawn: { x: 260, y: 260 }, // Center of map, will adjust to walkable area
+            playerSpawn: { x: 260, y: 340 }, // Center of main path
             npcs: [],
             decorations: [],
             // Mission Log - bottom gate
@@ -146,8 +111,6 @@ const MapSystem = {
     hiddenMist: false,
     hiddenMistAlpha: 0,
     loadedImages: {},
-    collisionMaps: {}, // Pixel data for walkability checks
-    collisionCanvases: {}, // Hidden canvases for pixel reading
 
     // Load map
     loadMap(mapId, game) {
@@ -178,18 +141,8 @@ const MapSystem = {
             img.src = map.backgroundImage;
             img.onload = () => {
                 console.log('🗺️ Map background loaded:', map.backgroundImage);
-                // Create collision map from image pixels
-                if (map.walkableColors || map.walkableColor) {
-                    this.createCollisionMap(mapId, img, map);
-                }
             };
             this.loadedImages[map.backgroundImage] = img;
-        } else if (map.backgroundImage && (map.walkableColors || map.walkableColor) && !this.collisionMaps?.[mapId]) {
-            // Image already loaded, create collision map
-            const img = this.loadedImages[map.backgroundImage];
-            if (img.complete) {
-                this.createCollisionMap(mapId, img, map);
-            }
         }
 
         // Spawn player at SCALED coordinates
@@ -239,96 +192,6 @@ const MapSystem = {
         return true;
     },
 
-    // Create collision map from image pixel data
-    createCollisionMap(mapId, img, map) {
-        // Create hidden canvas to read pixel data
-        const canvas = document.createElement('canvas');
-        const crop = map.imageCrop || { x: 0, y: 0, width: img.width, height: img.height };
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext('2d');
-
-        // Draw cropped portion of image
-        ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-
-        // Get pixel data
-        const imageData = ctx.getImageData(0, 0, crop.width, crop.height);
-
-        this.collisionCanvases[mapId] = canvas;
-        this.collisionMaps[mapId] = imageData;
-
-        console.log(`🗺️ Collision map created for ${mapId}: ${crop.width}x${crop.height}`);
-
-        // Log walkable area analysis
-        this.analyzeWalkableAreas(mapId, imageData);
-    },
-
-    // Analyze and log walkable areas
-    analyzeWalkableAreas(mapId, imageData) {
-        console.log('\n🚶 WALKABLE AREA ANALYSIS (Original Map Coordinates 520×520):');
-
-        // Sample grid to find walkable areas
-        const sampleSize = 20; // Sample every 20 pixels
-        const walkableRegions = [];
-
-        for (let y = 0; y < imageData.height; y += sampleSize) {
-            for (let x = 0; x < imageData.width; x += sampleSize) {
-                const index = (y * imageData.width + x) * 4;
-                const r = imageData.data[index];
-                const g = imageData.data[index + 1];
-                const b = imageData.data[index + 2];
-                const a = imageData.data[index + 3];
-
-                // Check if walkable
-                const walkableColors = this.currentMap.walkableColors || [];
-                const tolerance = this.currentMap.walkableColorTolerance || 30;
-                let isWalkable = false;
-
-                for (const color of walkableColors) {
-                    if (Math.abs(r - color.r) <= tolerance &&
-                        Math.abs(g - color.g) <= tolerance &&
-                        Math.abs(b - color.b) <= tolerance &&
-                        a > 128) {
-                        isWalkable = true;
-                        break;
-                    }
-                }
-
-                if (isWalkable) {
-                    walkableRegions.push({ x, y, r, g, b });
-                }
-            }
-        }
-
-        // Calculate scaled coordinates
-        const scaleX = this.currentMap.scaleX || 1;
-        const scaleY = this.currentMap.scaleY || 1;
-
-        const minX = Math.min(...walkableRegions.map(r => r.x));
-        const minY = Math.min(...walkableRegions.map(r => r.y));
-        const maxX = Math.max(...walkableRegions.map(r => r.x));
-        const maxY = Math.max(...walkableRegions.map(r => r.y));
-
-        // Store info for on-screen display
-        this.currentMap.walkableInfo = {
-            count: walkableRegions.length,
-            scaleX: scaleX.toFixed(2),
-            scaleY: scaleY.toFixed(2),
-            scaledBounds: {
-                minX: Math.floor(minX * scaleX),
-                minY: Math.floor(minY * scaleY),
-                maxX: Math.floor(maxX * scaleX),
-                maxY: Math.floor(maxY * scaleY)
-            }
-        };
-
-        // Show on-screen message
-        const info = this.currentMap.walkableInfo;
-        const message = `Walkable Area (Scaled Coords):\nScale: ${info.scaleX}x, ${info.scaleY}y\nBounds: (${info.scaledBounds.minX},${info.scaledBounds.minY}) to (${info.scaledBounds.maxX},${info.scaledBounds.maxY})\n${info.count} walkable points detected`;
-
-        console.log('\n🚶 ' + message.replace(/\n/g, '\n   '));
-    },
-
     // Find nearest walkable position (spiral search)
     findNearestWalkablePosition(x, y, maxRadius = 100) {
         // Check if current position is already walkable
@@ -359,51 +222,30 @@ const MapSystem = {
     isWalkable(x, y) {
         if (!this.currentMap) return true;
 
-        const mapId = this.currentMap.id;
-        const imageData = this.collisionMaps[mapId];
-
-        if (!imageData) return true; // No collision data, allow movement
+        // If no walkable zones defined, allow all movement (e.g., mission maps)
+        if (!this.currentMap.walkableZones || this.currentMap.walkableZones.length === 0) {
+            return true;
+        }
 
         // Get scale factors (screen coords to original map coords)
         const scaleX = this.currentMap.scaleX || 1;
         const scaleY = this.currentMap.scaleY || 1;
 
         // Convert scaled screen coordinates back to original map coordinates
-        const mapX = Math.floor(x / scaleX);
-        const mapY = Math.floor(y / scaleY);
+        const mapX = x / scaleX;
+        const mapY = y / scaleY;
 
-        // Check bounds
-        if (mapX < 0 || mapY < 0 || mapX >= imageData.width || mapY >= imageData.height) {
-            return false; // Out of bounds
+        // Check if position is inside any walkable zone
+        for (const zone of this.currentMap.walkableZones) {
+            if (mapX >= zone.x &&
+                mapX <= zone.x + zone.width &&
+                mapY >= zone.y &&
+                mapY <= zone.y + zone.height) {
+                return true; // Inside a walkable zone
+            }
         }
 
-        // Get pixel color at position
-        const index = (mapY * imageData.width + mapX) * 4;
-        const r = imageData.data[index];
-        const g = imageData.data[index + 1];
-        const b = imageData.data[index + 2];
-        const a = imageData.data[index + 3];
-
-        // Check if pixel is walkable (multiple color options)
-        const walkableColors = this.currentMap.walkableColors || [this.currentMap.walkableColor];
-        const tolerance = this.currentMap.walkableColorTolerance || 30;
-
-        if (!walkableColors || walkableColors.length === 0) return true; // No walkable colors defined
-
-        // Check if pixel matches any walkable color
-        for (const walkableColor of walkableColors) {
-            if (!walkableColor) continue;
-
-            const matches =
-                Math.abs(r - walkableColor.r) <= tolerance &&
-                Math.abs(g - walkableColor.g) <= tolerance &&
-                Math.abs(b - walkableColor.b) <= tolerance &&
-                a > 128; // Not transparent
-
-            if (matches) return true; // Found a match, position is walkable
-        }
-
-        return false; // No color match found, position is blocked
+        return false; // Not in any walkable zone
     },
 
     // Update map
