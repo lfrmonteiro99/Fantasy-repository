@@ -13,7 +13,7 @@ const MapSystem = {
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
             // Crop coordinates for main village area only
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
-            // Walkable rectangular zones (in original map coordinates)
+            // Walkable rectangular zones (in SCREEN coordinates)
             walkableZones: [
                 // Main horizontal path
                 { x: 162, y: 310, width: 1429, height: 60 }, // (162,310) to (1591,370)
@@ -227,20 +227,12 @@ const MapSystem = {
             return true;
         }
 
-        // Get scale factors (screen coords to original map coords)
-        const scaleX = this.currentMap.scaleX || 1;
-        const scaleY = this.currentMap.scaleY || 1;
-
-        // Convert scaled screen coordinates back to original map coordinates
-        const mapX = x / scaleX;
-        const mapY = y / scaleY;
-
-        // Check if position is inside any walkable zone
+        // Check if position is inside any walkable zone (using screen coordinates directly)
         for (const zone of this.currentMap.walkableZones) {
-            if (mapX >= zone.x &&
-                mapX <= zone.x + zone.width &&
-                mapY >= zone.y &&
-                mapY <= zone.y + zone.height) {
+            if (x >= zone.x &&
+                x <= zone.x + zone.width &&
+                y >= zone.y &&
+                y <= zone.y + zone.height) {
                 return true; // Inside a walkable zone
             }
         }
