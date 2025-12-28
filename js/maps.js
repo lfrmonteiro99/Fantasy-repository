@@ -225,17 +225,17 @@ const MapSystem = {
         // Konoha hub: only allow specific rectangular paths
         if (this.currentMap.id === 'konoha_hub') {
             // Rectangle 1: Main horizontal path (162,310) to (1591,370)
-            if (x >= 162 && x <= 1591 && y >= 310 && y <= 370) {
-                return true;
-            }
+            const inRect1 = x >= 162 && x <= 1591 && y >= 310 && y <= 370;
 
             // Rectangle 2: Vertical connection (729,297) to (881,325)
-            if (x >= 729 && x <= 881 && y >= 297 && y <= 325) {
-                return true;
+            const inRect2 = x >= 729 && x <= 881 && y >= 297 && y <= 325;
+
+            // Debug: log when blocked
+            if (!inRect1 && !inRect2) {
+                console.log(`BLOCKED at (${Math.floor(x)}, ${Math.floor(y)})`);
             }
 
-            // Not in any walkable zone
-            return false;
+            return inRect1 || inRect2;
         }
 
         // Other maps: allow all movement
