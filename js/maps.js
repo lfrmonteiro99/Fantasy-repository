@@ -224,16 +224,16 @@ const MapSystem = {
 
         // Konoha hub: only allow specific rectangular paths
         if (this.currentMap.id === 'konoha_hub') {
+            const playerRadius = 25; // Player's collision radius
+
             // Rectangle 1: Main horizontal path (162,310) to (1591,370)
-            const inRect1 = x >= 162 && x <= 1591 && y >= 310 && y <= 370;
+            // Account for player radius: shrink bounds by radius
+            const inRect1 = x >= 162 + playerRadius && x <= 1591 - playerRadius &&
+                           y >= 310 + playerRadius && y <= 370 - playerRadius;
 
             // Rectangle 2: Vertical connection (729,297) to (881,325)
-            const inRect2 = x >= 729 && x <= 881 && y >= 297 && y <= 325;
-
-            // Debug: log when blocked
-            if (!inRect1 && !inRect2) {
-                console.log(`BLOCKED at (${Math.floor(x)}, ${Math.floor(y)})`);
-            }
+            const inRect2 = x >= 729 + playerRadius && x <= 881 - playerRadius &&
+                           y >= 297 + playerRadius && y <= 325 - playerRadius;
 
             return inRect1 || inRect2;
         }
