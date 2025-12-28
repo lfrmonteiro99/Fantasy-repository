@@ -222,22 +222,24 @@ const MapSystem = {
     isWalkable(x, y) {
         if (!this.currentMap) return true;
 
-        // If no walkable zones defined, allow all movement (e.g., mission maps)
-        if (!this.currentMap.walkableZones || this.currentMap.walkableZones.length === 0) {
-            return true;
-        }
-
-        // Check if position is inside any walkable zone (using screen coordinates directly)
-        for (const zone of this.currentMap.walkableZones) {
-            if (x >= zone.x &&
-                x <= zone.x + zone.width &&
-                y >= zone.y &&
-                y <= zone.y + zone.height) {
-                return true; // Inside a walkable zone
+        // Konoha hub: only allow specific rectangular paths
+        if (this.currentMap.id === 'konoha_hub') {
+            // Rectangle 1: Main horizontal path (162,310) to (1591,370)
+            if (x >= 162 && x <= 1591 && y >= 310 && y <= 370) {
+                return true;
             }
+
+            // Rectangle 2: Vertical connection (729,297) to (891,325)
+            if (x >= 729 && x <= 891 && y >= 297 && y <= 325) {
+                return true;
+            }
+
+            // Not in any walkable zone
+            return false;
         }
 
-        return false; // Not in any walkable zone
+        // Other maps: allow all movement
+        return true;
     },
 
     // Update map
