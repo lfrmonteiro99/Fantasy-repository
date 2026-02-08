@@ -21,7 +21,23 @@ const MapSystem = {
                 { x: 729, y: 250, width: 152, height: 100 }  // (729,250) to (881,350)
             ],
             playerSpawn: { x: 260, y: 320 }, // Center of horizontal path
-            npcs: [],
+            npcs: [
+                {
+                    id: 'weapon_shop',
+                    name: 'Weapon Shop',
+                    type: 'shop',
+                    x: 800,
+                    y: 300,
+                    radius: 20,
+                    color: '#8B4513',
+                    interactRange: 60,
+                    shopInventory: [
+                        'basic_kunai', 'enhanced_kunai', 'legendary_kunai',
+                        'basic_vest', 'enhanced_vest', 'sage_cloak',
+                        'basic_scroll', 'enhanced_scroll', 'nine_tails_charm'
+                    ]
+                }
+            ],
             decorations: [],
             // Mission Log - bottom gate
             interactionZones: [

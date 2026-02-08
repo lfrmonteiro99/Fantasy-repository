@@ -228,11 +228,18 @@ const UISystem = {
         abilityBtns.forEach((btn, index) => {
             const abilityId = player.equippedAbilities[index];
             const nameEl = btn.querySelector('.ability-name');
+            const iconEl = btn.querySelector('.ability-icon');
             const cooldownEl = btn.querySelector('.ability-cooldown');
 
             if (abilityId) {
                 const ability = AbilitySystem.getAbility(abilityId);
                 if (ability) {
+                    // Update icon (show emoji if available, otherwise show Q/W/E/R)
+                    if (ability.icon) {
+                        iconEl.textContent = ability.icon;
+                        iconEl.style.fontSize = '2em';
+                    }
+
                     // Update name
                     nameEl.textContent = ability.name.split(' ')[0]; // First word only
 
@@ -608,8 +615,39 @@ const UISystem = {
     // Show shop modal
     showShopModal(npc, game) {
         document.getElementById('shop-title').textContent = npc.name;
-        document.getElementById('shop-player-gold').textContent = game.player.gold;
-        document.getElementById('shop-items').innerHTML = '<p>Shop system coming soon!</p>';
+        this.updateShopGold(game);
+
+        // Build shop inventory
+        const shopItemsDiv = document.getElementById('shop-items');
+        shopItemsDiv.innerHTML = '';
+
+        if (!npc.shopInventory || npc.shopInventory.length === 0) {
+            shopItemsDiv.innerHTML = '<p>No items available</p>';
+        } else {
+            npc.shopInventory.forEach(itemId => {
+                const item = ItemSystem.items[itemId];
+                if (!item) return;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'shop-item';
+                itemDiv.innerHTML = `
+                    <div class="shop-item-icon">${item.icon}</div>
+                    <div class="shop-item-info">
+                        <div class="shop-item-name rarity-${item.rarity}">${item.name}</div>
+                        <div class="shop-item-stats">${this.formatItemStats(item)}</div>
+                    </div>
+                    <div class="shop-item-price">
+                        <span class="gold-icon">💰</span>${item.value}
+                    </div>
+                    <button class="shop-buy-btn" data-item-id="${item.id}">Buy</button>
+                `;
+
+                const buyBtn = itemDiv.querySelector('.shop-buy-btn');
+                buyBtn.addEventListener('click', () => this.buyItem(item, game, npc));
+
+                shopItemsDiv.appendChild(itemDiv);
+            });
+        }
 
         const modal = this.elements.shopModal;
         modal.classList.remove('hidden');
@@ -621,6 +659,41 @@ const UISystem = {
             closeBtn.removeEventListener('click', closeHandler);
         };
         closeBtn.addEventListener('click', closeHandler);
+    },
+
+    buyItem(item, game, npc) {
+        if (game.player.gold < item.value) {
+            this.showNotification('Not enough gold!', 'error');
+            AudioManager.playUI('error');
+            return;
+        }
+
+        // Deduct gold
+        game.player.gold -= item.value;
+
+        // Add item to inventory
+        game.player.inventory.push(item.id);
+
+        // Update display
+        this.updateShopGold(game);
+        this.showNotification(`Purchased ${item.name}!`, 'success');
+        AudioManager.playUI('click');
+    },
+
+    updateShopGold(game) {
+        const goldEl = document.getElementById('shop-player-gold');
+        if (goldEl) {
+            goldEl.textContent = game.player.gold;
+        }
+    },
+
+    formatItemStats(item) {
+        const stats = [];
+        if (item.stats.attack) stats.push(`⚔️ ${item.stats.attack}`);
+        if (item.stats.defense) stats.push(`🛡️ ${item.stats.defense}`);
+        if (item.stats.health) stats.push(`❤️ +${item.stats.health}`);
+        if (item.stats.chakraRegen) stats.push(`💙 +${item.stats.chakraRegen}/s`);
+        return stats.join(' ');
     },
 
     // Show death modal
