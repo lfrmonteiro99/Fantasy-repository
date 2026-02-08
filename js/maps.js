@@ -15,13 +15,29 @@ const MapSystem = {
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
             // Walkable rectangular zones (in SCREEN coordinates)
             walkableZones: [
-                // Main horizontal path
-                { x: 162, y: 310, width: 1429, height: 60 }, // (162,310) to (1591,370)
-                // Vertical connection
-                { x: 729, y: 297, width: 152, height: 28 }  // (729,297) to (881,325)
+                // Main horizontal path - 100px height for comfortable movement
+                { x: 162, y: 270, width: 1429, height: 100 }, // (162,270) to (1591,370)
+                // Vertical connection - 100px height for comfortable movement
+                { x: 729, y: 250, width: 152, height: 100 }  // (729,250) to (881,350)
             ],
-            playerSpawn: { x: 260, y: 340 }, // Center of main path
-            npcs: [],
+            playerSpawn: { x: 260, y: 320 }, // Center of horizontal path
+            npcs: [
+                {
+                    id: 'weapon_shop',
+                    name: 'Weapon Shop',
+                    type: 'shop',
+                    x: 800,
+                    y: 300,
+                    radius: 20,
+                    color: '#8B4513',
+                    interactRange: 60,
+                    shopInventory: [
+                        'basic_kunai', 'enhanced_kunai', 'legendary_kunai',
+                        'basic_vest', 'enhanced_vest', 'sage_cloak',
+                        'basic_scroll', 'enhanced_scroll', 'nine_tails_charm'
+                    ]
+                }
+            ],
             decorations: [],
             // Mission Log - bottom gate
             interactionZones: [
@@ -226,14 +242,14 @@ const MapSystem = {
         if (this.currentMap.id === 'konoha_hub') {
             const playerRadius = 25; // Player's collision radius
 
-            // Rectangle 1: Main horizontal path (162,310) to (1591,370)
+            // Rectangle 1: Main horizontal path (162,270) to (1591,370) - 100px height
             // Account for player radius: shrink bounds by radius
             const inRect1 = x >= 162 + playerRadius && x <= 1591 - playerRadius &&
-                           y >= 310 + playerRadius && y <= 370 - playerRadius;
+                           y >= 270 + playerRadius && y <= 370 - playerRadius;
 
-            // Rectangle 2: Vertical connection (729,297) to (881,325)
+            // Rectangle 2: Vertical connection (729,250) to (881,350) - 100px height
             const inRect2 = x >= 729 + playerRadius && x <= 881 - playerRadius &&
-                           y >= 297 + playerRadius && y <= 325 - playerRadius;
+                           y >= 250 + playerRadius && y <= 350 - playerRadius;
 
             return inRect1 || inRect2;
         }

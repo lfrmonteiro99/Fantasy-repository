@@ -9,6 +9,13 @@ const AudioManager = {
     init() {
         if (this.initialized) return;
 
+        // Initialize Web Audio API for beep generation
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API not supported');
+        }
+
         // Define sound effects (using Web Audio API or simple Audio elements)
         this.soundDefinitions = {
             // UI sounds
@@ -70,8 +77,53 @@ const AudioManager = {
         });
     },
 
+    // Generate beep sound (placeholder for missing audio files)
+    playBeep(frequency = 440, duration = 0.1, vol = 0.3) {
+        if (!this.audioContext || !this.enabled) return;
+
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(vol * this.volume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration);
+        } catch (e) {
+            // Silently fail
+        }
+    },
+
     play(name, options = {}) {
         if (!this.enabled) return;
+
+        // Generate placeholder beep based on sound type
+        const beepFrequencies = {
+            'ui_click': 800,
+            'ui_error': 200,
+            'naruto_attack': 600,
+            'naruto_hurt': 400,
+            'shadow_clone': 700,
+            'rasengan': 900,
+            'kunai_throw': 1000,
+            'nine_tails': 500,
+            'enemy_hit': 550,
+            'enemy_die': 300,
+            'boss_hit': 450,
+            'level_up': 1200,
+            'item_pickup': 850,
+            'item_equip': 750
+        };
+
+        const freq = beepFrequencies[name] || 440;
+        this.playBeep(freq, 0.1, 0.2);
 
         const {
             volume = 1.0,
