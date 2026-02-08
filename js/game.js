@@ -52,6 +52,7 @@ class NarutoActionRPG {
         // Flags
         this.paused = false;
         this.showDebug = false;
+        this.debugLevel = 1; // 0 = off, 1 = basic, 2 = advanced, 3 = collision zones
 
         // Mobile interaction tracking
         this.lastTapNearNPC = null;
@@ -147,9 +148,11 @@ class NarutoActionRPG {
                     this.input.space = true;
                 }
 
-                // Debug toggle
+                // Debug toggle (cycle through levels)
                 if (e.key === 'F3') {
-                    this.showDebug = !this.showDebug;
+                    e.preventDefault();
+                    this.debugLevel = (this.debugLevel + 1) % 4; // Cycle 0-3
+                    this.showDebug = this.debugLevel > 0;
                 }
             }
         });
@@ -543,11 +546,23 @@ class NarutoActionRPG {
             // Draw notifications
             this.drawNotifications();
 
-            // Always show walkable area info
-            this.drawWalkableInfo();
-
             // Draw debug info
             if (this.showDebug) {
+                // Draw collision zones and NPC ranges (level 2+)
+                if (this.debugLevel >= 2) {
+                    this.drawNPCRanges();
+                }
+
+                if (this.debugLevel >= 3) {
+                    this.drawCollisionZones();
+                }
+
+                // Draw enemy health bars (level 2+)
+                if (this.debugLevel >= 2) {
+                    this.drawEnemyHealthBars();
+                }
+
+                // Draw debug overlay
                 this.drawDebugInfo();
             }
         }
@@ -557,70 +572,299 @@ class NarutoActionRPG {
     }
 
     drawDebugInfo() {
-        const debugInfo = [
-            `FPS: ${this.fpsCounter.fps}`,
-            `Player: (${Math.floor(this.player?.x || 0)}, ${Math.floor(this.player?.y || 0)})`,
-            `Enemies: ${this.enemies?.length || 0}`,
-            `Projectiles: ${this.projectiles?.length || 0}`,
-            `Particles: ${this.particles?.length || 0}`,
-            `Camera: (${Math.floor(this.camera.x)}, ${Math.floor(this.camera.y)})`
-        ];
+        const debugInfo = [];
 
-        // Add walkable area info if available
-        if (this.currentMap?.walkableInfo) {
-            const w = this.currentMap.walkableInfo;
+        // Header
+        debugInfo.push(`=== DEBUG MODE (F3: Level ${this.debugLevel}/3) ===`);
+        debugInfo.push('');
+
+        // LEVEL 1: Basic Info
+        debugInfo.push('PERFORMANCE:');
+        debugInfo.push(`  FPS: ${this.fpsCounter.fps}`);
+        debugInfo.push(`  Entities: ${(this.enemies?.length || 0) + (this.projectiles?.length || 0) + (this.particles?.length || 0)}`);
+        debugInfo.push('');
+
+        debugInfo.push('PLAYER:');
+        const px = Math.floor(this.player?.x || 0);
+        const py = Math.floor(this.player?.y || 0);
+        debugInfo.push(`  Position: (${px}, ${py})`);
+
+        if (this.debugLevel >= 2) {
+            // LEVEL 2: Advanced Stats
+            const tx = Math.floor(this.player?.targetX || 0);
+            const ty = Math.floor(this.player?.targetY || 0);
+            debugInfo.push(`  Target: (${tx}, ${ty})`);
+            debugInfo.push(`  Moving: ${this.player?.isMoving ? 'YES' : 'NO'}`);
+
+            if (this.player) {
+                debugInfo.push(`  HP: ${Math.floor(this.player.health)}/${this.player.maxHealth}`);
+                debugInfo.push(`  Chakra: ${Math.floor(this.player.chakra)}/${this.player.maxChakra}`);
+                debugInfo.push(`  Level: ${this.player.level} (${this.player.xp}/${this.player.xpToNextLevel} XP)`);
+                debugInfo.push(`  Gold: ${this.player.gold}`);
+
+                // Show active status effects
+                if (this.player.statusEffects && this.player.statusEffects.length > 0) {
+                    debugInfo.push(`  Effects: ${this.player.statusEffects.map(e => e.type).join(', ')}`);
+                }
+            }
+
             debugInfo.push('');
-            debugInfo.push(`Scale: ${w.scaleX}x, ${w.scaleY}y`);
-            debugInfo.push(`Walkable: (${w.scaledBounds.minX},${w.scaledBounds.minY})`);
-            debugInfo.push(`       to (${w.scaledBounds.maxX},${w.scaledBounds.maxY})`);
+            debugInfo.push('MAP:');
+            debugInfo.push(`  ID: ${this.currentMap?.id || 'none'}`);
+            debugInfo.push(`  Type: ${this.currentMap?.type || 'unknown'}`);
+            debugInfo.push(`  Canvas: ${this.canvas.width}x${this.canvas.height}`);
+
+            if (this.currentMap?.walkableInfo) {
+                const w = this.currentMap.walkableInfo;
+                debugInfo.push(`  Scale: ${w.scaleX.toFixed(2)}x, ${w.scaleY.toFixed(2)}y`);
+            }
+
+            debugInfo.push('');
+            debugInfo.push('ENTITIES:');
+            debugInfo.push(`  Enemies: ${this.enemies?.length || 0}`);
+            debugInfo.push(`  Projectiles: ${this.projectiles?.length || 0}`);
+            debugInfo.push(`  Particles: ${this.particles?.length || 0}`);
+            debugInfo.push(`  Items: ${this.itemDrops?.length || 0}`);
+
+            if (this.currentMap?.npcs) {
+                debugInfo.push(`  NPCs: ${this.currentMap.npcs.length}`);
+            }
+
+            debugInfo.push('');
+            debugInfo.push('CAMERA:');
+            debugInfo.push(`  Position: (${Math.floor(this.camera.x)}, ${Math.floor(this.camera.y)})`);
         }
 
+        if (this.debugLevel >= 3) {
+            // LEVEL 3: Collision Info
+            debugInfo.push('');
+            debugInfo.push('COLLISION:');
+            if (this.currentMap?.walkableZones) {
+                debugInfo.push(`  Zones: ${this.currentMap.walkableZones.length}`);
+                this.currentMap.walkableZones.forEach((zone, i) => {
+                    const playerRadius = 25;
+                    const inZone = px >= zone.x + playerRadius && px <= zone.x + zone.width - playerRadius &&
+                                   py >= zone.y + playerRadius && py <= zone.y + zone.height - playerRadius;
+                    const status = inZone ? '✓' : ' ';
+                    debugInfo.push(`  [${status}] Zone ${i+1}: (${zone.x},${zone.y}) ${zone.width}x${zone.height}`);
+                });
+            } else {
+                debugInfo.push(`  No zones defined`);
+            }
+        }
+
+        // Draw background
         this.ctx.save();
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(10, 10, 280, debugInfo.length * 20 + 10);
+        const panelWidth = 420;
+        const lineHeight = 18;
+        const panelHeight = debugInfo.length * lineHeight + 20;
 
-        debugInfo.forEach((line, index) => {
-            Utils.drawText(this.ctx, line, 15, 15 + index * 20, {
-                font: '14px monospace',
-                color: '#00FF00'
-            });
-        });
-        this.ctx.restore();
-    }
-
-    drawWalkableInfo() {
-        if (!this.currentMap?.walkableInfo) return;
-
-        const w = this.currentMap.walkableInfo;
-        const playerX = Math.floor(this.player?.x || 0);
-        const playerY = Math.floor(this.player?.y || 0);
-        const targetX = Math.floor(this.player?.targetX || 0);
-        const targetY = Math.floor(this.player?.targetY || 0);
-        const moving = this.player?.isMoving ? 'YES' : 'NO';
-
-        const info = [
-            'DEBUG INFO:',
-            `Player: (${playerX}, ${playerY})`,
-            `Target: (${targetX}, ${targetY})`,
-            `Moving: ${moving}`,
-            `Canvas: ${this.canvas.width}x${this.canvas.height}`,
-            `Scale: ${w.scaleX}x, ${w.scaleY}y`
-        ];
-
-        this.ctx.save();
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.fillRect(10, 200, 320, 140);
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        this.ctx.fillRect(10, 10, panelWidth, panelHeight);
 
         this.ctx.strokeStyle = '#00FF00';
         this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(10, 200, 320, 140);
+        this.ctx.strokeRect(10, 10, panelWidth, panelHeight);
 
-        info.forEach((line, index) => {
-            Utils.drawText(this.ctx, line, 20, 220 + index * 22, {
-                font: index === 0 ? 'bold 14px monospace' : '14px monospace',
-                color: index === 0 ? '#FFD700' : '#00FF00'
+        // Draw text
+        debugInfo.forEach((line, index) => {
+            let color = '#00FF00';
+            let font = '13px monospace';
+
+            // Header styling
+            if (line.includes('===')) {
+                color = '#FFD700';
+                font = 'bold 14px monospace';
+            } else if (line.endsWith(':') && !line.startsWith(' ')) {
+                color = '#FF6B1A';
+                font = 'bold 13px monospace';
+            } else if (line.includes('✓')) {
+                color = '#00FF00';
+            }
+
+            Utils.drawText(this.ctx, line, 20, 25 + index * lineHeight, {
+                font: font,
+                color: color
             });
         });
+
+        this.ctx.restore();
+    }
+
+    drawCollisionZones() {
+        if (!this.currentMap?.walkableZones) return;
+
+        this.ctx.save();
+
+        const playerRadius = 25;
+
+        this.currentMap.walkableZones.forEach((zone, index) => {
+            // Draw outer zone (full area)
+            this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
+
+            // Fill outer zone
+            this.ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+            this.ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+
+            // Draw inner zone (walkable with player radius)
+            const innerX = zone.x + playerRadius;
+            const innerY = zone.y + playerRadius;
+            const innerWidth = zone.width - playerRadius * 2;
+            const innerHeight = zone.height - playerRadius * 2;
+
+            this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.strokeRect(innerX, innerY, innerWidth, innerHeight);
+
+            // Fill inner zone
+            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.15)';
+            this.ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
+
+            this.ctx.setLineDash([]);
+
+            // Draw zone label
+            Utils.drawText(this.ctx, `Zone ${index + 1}`, zone.x + 10, zone.y + 20, {
+                font: 'bold 14px monospace',
+                color: '#FFFFFF',
+                shadow: true
+            });
+
+            // Draw coordinates
+            Utils.drawText(this.ctx, `(${zone.x}, ${zone.y})`, zone.x + 10, zone.y + 38, {
+                font: '12px monospace',
+                color: '#FFFFFF',
+                shadow: true
+            });
+
+            Utils.drawText(this.ctx, `${zone.width}x${zone.height}`, zone.x + 10, zone.y + 54, {
+                font: '12px monospace',
+                color: '#FFFFFF',
+                shadow: true
+            });
+        });
+
+        // Draw player radius circle
+        if (this.player) {
+            this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, playerRadius, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            // Draw player center point
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, 3, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        this.ctx.restore();
+    }
+
+    drawNPCRanges() {
+        if (!this.currentMap?.npcs) return;
+
+        this.ctx.save();
+
+        this.currentMap.npcs.forEach((npc) => {
+            // Draw NPC position
+            this.ctx.fillStyle = 'rgba(139, 69, 19, 0.7)';
+            this.ctx.beginPath();
+            this.ctx.arc(npc.x, npc.y, npc.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Draw NPC border
+            this.ctx.strokeStyle = '#8B4513';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+
+            // Draw interaction range
+            this.ctx.strokeStyle = 'rgba(255, 107, 26, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.beginPath();
+            this.ctx.arc(npc.x, npc.y, npc.interactRange, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+
+            // Draw NPC name
+            Utils.drawText(this.ctx, npc.name, npc.x, npc.y - npc.radius - 10, {
+                font: 'bold 12px monospace',
+                color: '#FFD700',
+                align: 'center',
+                shadow: true
+            });
+
+            // Draw type
+            Utils.drawText(this.ctx, `[${npc.type}]`, npc.x, npc.y - npc.radius - 25, {
+                font: '10px monospace',
+                color: '#FFFFFF',
+                align: 'center',
+                shadow: true
+            });
+        });
+
+        this.ctx.restore();
+    }
+
+    drawEnemyHealthBars() {
+        if (!this.enemies) return;
+
+        this.ctx.save();
+
+        this.enemies.forEach((enemy) => {
+            if (enemy.isDead) return;
+
+            const barWidth = 60;
+            const barHeight = 6;
+            const x = enemy.x - barWidth / 2;
+            const y = enemy.y - enemy.radius - 15;
+
+            // Background
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(x - 1, y - 1, barWidth + 2, barHeight + 2);
+
+            // Health bar
+            const healthPercent = enemy.health / enemy.maxHealth;
+            const healthWidth = barWidth * healthPercent;
+
+            // Color based on health
+            if (healthPercent > 0.6) {
+                this.ctx.fillStyle = '#00FF00';
+            } else if (healthPercent > 0.3) {
+                this.ctx.fillStyle = '#FFAA00';
+            } else {
+                this.ctx.fillStyle = '#FF0000';
+            }
+
+            this.ctx.fillRect(x, y, healthWidth, barHeight);
+
+            // Border
+            this.ctx.strokeStyle = '#FFFFFF';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(x, y, barWidth, barHeight);
+
+            // Health text
+            Utils.drawText(this.ctx, `${Math.floor(enemy.health)}/${enemy.maxHealth}`, enemy.x, y - 5, {
+                font: '10px monospace',
+                color: '#FFFFFF',
+                align: 'center',
+                shadow: true
+            });
+
+            // Enemy name
+            const nameColor = enemy.isBoss ? '#FFD700' : '#FFFFFF';
+            Utils.drawText(this.ctx, enemy.name, enemy.x, y + barHeight + 12, {
+                font: enemy.isBoss ? 'bold 11px monospace' : '10px monospace',
+                color: nameColor,
+                align: 'center',
+                shadow: true
+            });
+        });
+
         this.ctx.restore();
     }
 
