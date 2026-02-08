@@ -20,7 +20,8 @@ const MapSystem = {
                 // Vertical connection - 100px height for comfortable movement
                 { x: 729, y: 250, width: 152, height: 100 }  // (729,250) to (881,350)
             ],
-            playerSpawn: { x: 260, y: 320 }, // Center of horizontal path
+            // Spawn in center of main path (in screen coordinates)
+            playerSpawn: { x: 875, y: 320, useScreenCoords: true },
             npcs: [
                 {
                     id: 'weapon_shop',
@@ -161,13 +162,22 @@ const MapSystem = {
             this.loadedImages[map.backgroundImage] = img;
         }
 
-        // Spawn player at SCALED coordinates
+        // Spawn player
         if (game.player) {
-            const scaleX = this.currentMap.scaleX || 1;
-            const scaleY = this.currentMap.scaleY || 1;
+            let spawnX, spawnY;
 
-            let spawnX = map.playerSpawn.x * scaleX;
-            let spawnY = map.playerSpawn.y * scaleY;
+            // Check if spawn uses screen coordinates (for fullscreen hub maps)
+            if (map.playerSpawn.useScreenCoords) {
+                // Use spawn coordinates directly (already in screen space)
+                spawnX = map.playerSpawn.x;
+                spawnY = map.playerSpawn.y;
+            } else {
+                // Scale from map coordinates to screen coordinates
+                const scaleX = this.currentMap.scaleX || 1;
+                const scaleY = this.currentMap.scaleY || 1;
+                spawnX = map.playerSpawn.x * scaleX;
+                spawnY = map.playerSpawn.y * scaleY;
+            }
 
             // Ensure spawn point is walkable (for maps with collision)
             const walkablePos = this.findNearestWalkablePosition(spawnX, spawnY);
