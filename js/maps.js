@@ -13,14 +13,8 @@ const MapSystem = {
             backgroundImage: 'assets/sprites/Game Boy Advance - Naruto RPG_ Uketsugareshi Hi no Ishi (JPN) - Backgrounds - Konoha Village.gif',
             // Crop coordinates for main village area only
             imageCrop: { x: 0, y: 0, width: 520, height: 520 },
-            // Walkable rectangular zones (in SCREEN coordinates)
-            walkableZones: [
-                // Main horizontal path - 100px height for comfortable movement
-                { x: 162, y: 270, width: 1429, height: 100 }, // (162,270) to (1591,370)
-                // Vertical connection - 100px height for comfortable movement
-                { x: 729, y: 250, width: 152, height: 100 }  // (729,250) to (881,350)
-            ],
-            // Spawn in center of main path (in screen coordinates)
+            // Pixel-based collision: walkable color is automatically detected at spawn
+            // Spawn in center of walkable path (in screen coordinates)
             playerSpawn: { x: 875, y: 320, useScreenCoords: true },
             npcs: [
                 {
@@ -129,6 +123,16 @@ const MapSystem = {
     hiddenMistAlpha: 0,
     loadedImages: {},
 
+    // Collision detection via pixel colors
+    collisionCanvas: null,
+    collisionCtx: null,
+    collisionImageData: null,
+
+    // Walkable color definition (light green/yellow path color)
+    // This is the color from the walkable paths in the map
+    walkableColor: { r: 210, g: 230, b: 190 },
+    colorTolerance: 40, // Allow +/- 40 in each RGB channel
+
     // Load map
     loadMap(mapId, game) {
         const map = this.maps[mapId];
@@ -158,8 +162,16 @@ const MapSystem = {
             img.src = map.backgroundImage;
             img.onload = () => {
                 console.log('🗺️ Map background loaded:', map.backgroundImage);
+                // Initialize collision detection from image pixels
+                this.initializeCollisionMap(img, map, game);
             };
             this.loadedImages[map.backgroundImage] = img;
+        } else if (map.backgroundImage && this.loadedImages[map.backgroundImage]) {
+            // Image already loaded, initialize collision map
+            const img = this.loadedImages[map.backgroundImage];
+            if (img.complete) {
+                this.initializeCollisionMap(img, map, game);
+            }
         }
 
         // Spawn player
@@ -218,6 +230,93 @@ const MapSystem = {
         return true;
     },
 
+    // Initialize collision map from background image pixels
+    initializeCollisionMap(img, map, game) {
+        if (!game || !game.canvas) return;
+
+        console.log('🎨 Initializing pixel-based collision detection...');
+
+        // Create off-screen canvas for collision detection
+        if (!this.collisionCanvas) {
+            this.collisionCanvas = document.createElement('canvas');
+            this.collisionCtx = this.collisionCanvas.getContext('2d', { willReadFrequently: true });
+        }
+
+        // For fullscreen maps, use the scaled canvas dimensions
+        if (map.type === 'hub' && map.imageCrop) {
+            const crop = map.imageCrop;
+            this.collisionCanvas.width = game.canvas.width;
+            this.collisionCanvas.height = game.canvas.height;
+
+            // Draw the cropped image scaled to full screen
+            this.collisionCtx.drawImage(
+                img,
+                crop.x, crop.y, crop.width, crop.height,
+                0, 0, game.canvas.width, game.canvas.height
+            );
+
+            console.log(`📏 Collision map: ${game.canvas.width}x${game.canvas.height} (scaled from ${crop.width}x${crop.height})`);
+        } else {
+            // For non-hub maps, use original dimensions
+            this.collisionCanvas.width = img.width;
+            this.collisionCanvas.height = img.height;
+            this.collisionCtx.drawImage(img, 0, 0);
+        }
+
+        // Get image data for pixel sampling
+        this.collisionImageData = this.collisionCtx.getImageData(
+            0, 0,
+            this.collisionCanvas.width,
+            this.collisionCanvas.height
+        );
+
+        // Sample color at spawn point to set as walkable color
+        if (map.playerSpawn) {
+            const spawnX = map.playerSpawn.useScreenCoords ? map.playerSpawn.x : map.playerSpawn.x;
+            const spawnY = map.playerSpawn.useScreenCoords ? map.playerSpawn.y : map.playerSpawn.y;
+            const color = this.getPixelColor(spawnX, spawnY);
+
+            if (color) {
+                this.walkableColor = { r: color.r, g: color.g, b: color.b };
+                console.log(`🎨 Detected walkable color at spawn: RGB(${color.r}, ${color.g}, ${color.b})`);
+            }
+        }
+
+        console.log('✅ Collision detection ready');
+    },
+
+    // Get pixel color at specific coordinates
+    getPixelColor(x, y) {
+        if (!this.collisionImageData) return null;
+
+        // Ensure coordinates are within bounds
+        x = Math.floor(x);
+        y = Math.floor(y);
+
+        if (x < 0 || x >= this.collisionCanvas.width || y < 0 || y >= this.collisionCanvas.height) {
+            return null;
+        }
+
+        const index = (y * this.collisionCanvas.width + x) * 4;
+        const data = this.collisionImageData.data;
+
+        return {
+            r: data[index],
+            g: data[index + 1],
+            b: data[index + 2],
+            a: data[index + 3]
+        };
+    },
+
+    // Check if two colors match within tolerance
+    colorsMatch(color1, color2, tolerance) {
+        if (!color1 || !color2) return false;
+
+        return Math.abs(color1.r - color2.r) <= tolerance &&
+               Math.abs(color1.g - color2.g) <= tolerance &&
+               Math.abs(color1.b - color2.b) <= tolerance;
+    },
+
     // Find nearest walkable position (spiral search)
     findNearestWalkablePosition(x, y, maxRadius = 100) {
         // Check if current position is already walkable
@@ -244,24 +343,42 @@ const MapSystem = {
         return { x, y };
     },
 
-    // Check if a position is walkable
+    // Check if a position is walkable (pixel-based collision)
     isWalkable(x, y) {
         if (!this.currentMap) return true;
 
-        // Konoha hub: only allow specific rectangular paths
-        if (this.currentMap.id === 'konoha_hub') {
-            const playerRadius = 25; // Player's collision radius
+        // Use pixel-based collision for Konoha hub
+        if (this.currentMap.id === 'konoha_hub' && this.collisionImageData) {
+            const playerRadius = 25;
 
-            // Rectangle 1: Main horizontal path (162,270) to (1591,370) - 100px height
-            // Account for player radius: shrink bounds by radius
-            const inRect1 = x >= 162 + playerRadius && x <= 1591 - playerRadius &&
-                           y >= 270 + playerRadius && y <= 370 - playerRadius;
+            // Check multiple points around player's collision circle
+            // Center + 8 points around the radius
+            const checkPoints = [
+                { x: x, y: y }, // Center
+                { x: x + playerRadius, y: y }, // Right
+                { x: x - playerRadius, y: y }, // Left
+                { x: x, y: y + playerRadius }, // Down
+                { x: x, y: y - playerRadius }, // Up
+                { x: x + playerRadius * 0.7, y: y + playerRadius * 0.7 }, // Bottom-right
+                { x: x - playerRadius * 0.7, y: y + playerRadius * 0.7 }, // Bottom-left
+                { x: x + playerRadius * 0.7, y: y - playerRadius * 0.7 }, // Top-right
+                { x: x - playerRadius * 0.7, y: y - playerRadius * 0.7 }  // Top-left
+            ];
 
-            // Rectangle 2: Vertical connection (729,250) to (881,350) - 100px height
-            const inRect2 = x >= 729 + playerRadius && x <= 881 - playerRadius &&
-                           y >= 250 + playerRadius && y <= 350 - playerRadius;
+            // All check points must be on walkable color
+            for (let point of checkPoints) {
+                const pixelColor = this.getPixelColor(point.x, point.y);
 
-            return inRect1 || inRect2;
+                if (!pixelColor) {
+                    return false; // Out of bounds
+                }
+
+                if (!this.colorsMatch(pixelColor, this.walkableColor, this.colorTolerance)) {
+                    return false; // Not on walkable color
+                }
+            }
+
+            return true; // All points are walkable
         }
 
         // Other maps: allow all movement

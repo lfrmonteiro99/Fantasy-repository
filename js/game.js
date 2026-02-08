@@ -639,7 +639,23 @@ class NarutoActionRPG {
             // LEVEL 3: Collision Info
             debugInfo.push('');
             debugInfo.push('COLLISION:');
-            if (this.currentMap?.walkableZones) {
+
+            // Pixel-based collision info
+            if (MapSystem.collisionImageData) {
+                const wc = MapSystem.walkableColor;
+                debugInfo.push(`  Type: Pixel-based`);
+                debugInfo.push(`  Walkable RGB: (${wc.r}, ${wc.g}, ${wc.b})`);
+                debugInfo.push(`  Tolerance: ±${MapSystem.colorTolerance}`);
+
+                // Check current pixel color under player
+                const pixelColor = MapSystem.getPixelColor(px, py);
+                if (pixelColor) {
+                    debugInfo.push(`  Player pixel: (${pixelColor.r}, ${pixelColor.g}, ${pixelColor.b})`);
+                    const walkable = MapSystem.colorsMatch(pixelColor, wc, MapSystem.colorTolerance);
+                    debugInfo.push(`  Standing on: ${walkable ? '✓ Walkable' : '✗ Non-walkable'}`);
+                }
+            } else if (this.currentMap?.walkableZones) {
+                debugInfo.push(`  Type: Rectangle-based`);
                 debugInfo.push(`  Zones: ${this.currentMap.walkableZones.length}`);
                 this.currentMap.walkableZones.forEach((zone, i) => {
                     const playerRadius = 25;
@@ -649,7 +665,7 @@ class NarutoActionRPG {
                     debugInfo.push(`  [${status}] Zone ${i+1}: (${zone.x},${zone.y}) ${zone.width}x${zone.height}`);
                 });
             } else {
-                debugInfo.push(`  No zones defined`);
+                debugInfo.push(`  Type: None (free movement)`);
             }
         }
 
@@ -692,73 +708,106 @@ class NarutoActionRPG {
     }
 
     drawCollisionZones() {
-        if (!this.currentMap?.walkableZones) return;
-
         this.ctx.save();
 
         const playerRadius = 25;
 
-        this.currentMap.walkableZones.forEach((zone, index) => {
-            // Draw outer zone (full area)
-            this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
-
-            // Fill outer zone
-            this.ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
-            this.ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-
-            // Draw inner zone (walkable with player radius)
-            const innerX = zone.x + playerRadius;
-            const innerY = zone.y + playerRadius;
-            const innerWidth = zone.width - playerRadius * 2;
-            const innerHeight = zone.height - playerRadius * 2;
-
-            this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
-            this.ctx.lineWidth = 2;
-            this.ctx.setLineDash([5, 5]);
-            this.ctx.strokeRect(innerX, innerY, innerWidth, innerHeight);
-
-            // Fill inner zone
-            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.15)';
-            this.ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
-
-            this.ctx.setLineDash([]);
-
-            // Draw zone label
-            Utils.drawText(this.ctx, `Zone ${index + 1}`, zone.x + 10, zone.y + 20, {
-                font: 'bold 14px monospace',
-                color: '#FFFFFF',
-                shadow: true
-            });
-
-            // Draw coordinates
-            Utils.drawText(this.ctx, `(${zone.x}, ${zone.y})`, zone.x + 10, zone.y + 38, {
-                font: '12px monospace',
-                color: '#FFFFFF',
-                shadow: true
-            });
-
-            Utils.drawText(this.ctx, `${zone.width}x${zone.height}`, zone.x + 10, zone.y + 54, {
-                font: '12px monospace',
-                color: '#FFFFFF',
-                shadow: true
-            });
-        });
-
-        // Draw player radius circle
+        // Draw player collision circle and check points
         if (this.player) {
+            // Draw player radius circle
             this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
             this.ctx.arc(this.player.x, this.player.y, playerRadius, 0, Math.PI * 2);
             this.ctx.stroke();
 
+            // Draw collision check points
+            const checkPoints = [
+                { x: this.player.x, y: this.player.y, label: 'C' }, // Center
+                { x: this.player.x + playerRadius, y: this.player.y, label: 'R' },
+                { x: this.player.x - playerRadius, y: this.player.y, label: 'L' },
+                { x: this.player.x, y: this.player.y + playerRadius, label: 'D' },
+                { x: this.player.x, y: this.player.y - playerRadius, label: 'U' },
+                { x: this.player.x + playerRadius * 0.7, y: this.player.y + playerRadius * 0.7, label: 'BR' },
+                { x: this.player.x - playerRadius * 0.7, y: this.player.y + playerRadius * 0.7, label: 'BL' },
+                { x: this.player.x + playerRadius * 0.7, y: this.player.y - playerRadius * 0.7, label: 'TR' },
+                { x: this.player.x - playerRadius * 0.7, y: this.player.y - playerRadius * 0.7, label: 'TL' }
+            ];
+
+            checkPoints.forEach(point => {
+                const pixelColor = MapSystem.getPixelColor(point.x, point.y);
+                const isWalkable = pixelColor && MapSystem.colorsMatch(
+                    pixelColor,
+                    MapSystem.walkableColor,
+                    MapSystem.colorTolerance
+                );
+
+                // Draw check point
+                this.ctx.fillStyle = isWalkable ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)';
+                this.ctx.beginPath();
+                this.ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Draw label
+                Utils.drawText(this.ctx, point.label, point.x, point.y - 8, {
+                    font: '9px monospace',
+                    color: '#FFFFFF',
+                    align: 'center',
+                    shadow: true
+                });
+            });
+
             // Draw player center point
-            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
             this.ctx.beginPath();
             this.ctx.arc(this.player.x, this.player.y, 3, 0, Math.PI * 2);
             this.ctx.fill();
+        }
+
+        // Draw color legend
+        if (MapSystem.collisionImageData) {
+            const legendX = this.canvas.width - 260;
+            const legendY = 10;
+
+            // Background
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            this.ctx.fillRect(legendX, legendY, 250, 100);
+
+            this.ctx.strokeStyle = '#00FF00';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(legendX, legendY, 250, 100);
+
+            // Title
+            Utils.drawText(this.ctx, 'COLLISION COLOR', legendX + 10, legendY + 20, {
+                font: 'bold 13px monospace',
+                color: '#FFD700'
+            });
+
+            // Walkable color swatch
+            const wc = MapSystem.walkableColor;
+            this.ctx.fillStyle = `rgb(${wc.r}, ${wc.g}, ${wc.b})`;
+            this.ctx.fillRect(legendX + 10, legendY + 30, 40, 40);
+
+            this.ctx.strokeStyle = '#FFFFFF';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(legendX + 10, legendY + 30, 40, 40);
+
+            // Color info
+            Utils.drawText(this.ctx, `RGB: (${wc.r}, ${wc.g}, ${wc.b})`, legendX + 60, legendY + 45, {
+                font: '12px monospace',
+                color: '#00FF00'
+            });
+
+            Utils.drawText(this.ctx, `Tolerance: ±${MapSystem.colorTolerance}`, legendX + 60, legendY + 65, {
+                font: '12px monospace',
+                color: '#00FF00'
+            });
+
+            // Legend
+            Utils.drawText(this.ctx, '🟢 = Walkable  🔴 = Blocked', legendX + 10, legendY + 90, {
+                font: '11px monospace',
+                color: '#FFFFFF'
+            });
         }
 
         this.ctx.restore();
