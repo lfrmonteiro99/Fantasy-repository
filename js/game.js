@@ -658,7 +658,7 @@ class NarutoActionRPG {
                 debugInfo.push(`  Type: Rectangle-based`);
                 debugInfo.push(`  Zones: ${this.currentMap.walkableZones.length}`);
                 this.currentMap.walkableZones.forEach((zone, i) => {
-                    const playerRadius = 25;
+                    const playerRadius = this.player?.radius || 15;
                     const inZone = px >= zone.x + playerRadius && px <= zone.x + zone.width - playerRadius &&
                                    py >= zone.y + playerRadius && py <= zone.y + zone.height - playerRadius;
                     const status = inZone ? '✓' : ' ';
@@ -710,7 +710,7 @@ class NarutoActionRPG {
     drawCollisionZones() {
         this.ctx.save();
 
-        const playerRadius = 25;
+        const playerRadius = this.player?.radius || 15; // Use actual player radius
 
         // Draw player collision circle and check points
         if (this.player) {
@@ -721,17 +721,13 @@ class NarutoActionRPG {
             this.ctx.arc(this.player.x, this.player.y, playerRadius, 0, Math.PI * 2);
             this.ctx.stroke();
 
-            // Draw collision check points
+            // Draw collision check points (only 5 points - center + 4 cardinal)
             const checkPoints = [
                 { x: this.player.x, y: this.player.y, label: 'C' }, // Center
                 { x: this.player.x + playerRadius, y: this.player.y, label: 'R' },
                 { x: this.player.x - playerRadius, y: this.player.y, label: 'L' },
                 { x: this.player.x, y: this.player.y + playerRadius, label: 'D' },
-                { x: this.player.x, y: this.player.y - playerRadius, label: 'U' },
-                { x: this.player.x + playerRadius * 0.7, y: this.player.y + playerRadius * 0.7, label: 'BR' },
-                { x: this.player.x - playerRadius * 0.7, y: this.player.y + playerRadius * 0.7, label: 'BL' },
-                { x: this.player.x + playerRadius * 0.7, y: this.player.y - playerRadius * 0.7, label: 'TR' },
-                { x: this.player.x - playerRadius * 0.7, y: this.player.y - playerRadius * 0.7, label: 'TL' }
+                { x: this.player.x, y: this.player.y - playerRadius, label: 'U' }
             ];
 
             checkPoints.forEach(point => {

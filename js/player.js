@@ -7,7 +7,7 @@ class Player extends Combatant {
             throw new Error(`Character ${characterId} not found`);
         }
 
-        super(x, y, 25);
+        super(x, y, 15); // Reduced collision radius for better movement (visual sprite remains 90x90)
 
         // Identity
         this.characterId = characterId;
@@ -265,20 +265,19 @@ class Player extends Combatant {
             this.x += this.vx * dt;
             this.y += this.vy * dt;
 
-            // TEMPORARY: Collision disabled for debugging
             // Check walkability/collision
-            // if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y)) {
-            //     // Try sliding along walls
-            //     if (MapSystem.isWalkable(this.x, prevY)) {
-            //         this.y = prevY; // Slide horizontally
-            //     } else if (MapSystem.isWalkable(prevX, this.y)) {
-            //         this.x = prevX; // Slide vertically
-            //     } else {
-            //         // Can't move, revert
-            //         this.x = prevX;
-            //         this.y = prevY;
-            //     }
-            // }
+            if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y, this.radius)) {
+                // Try sliding along walls
+                if (MapSystem.isWalkable(this.x, prevY, this.radius)) {
+                    this.y = prevY; // Slide horizontally
+                } else if (MapSystem.isWalkable(prevX, this.y, this.radius)) {
+                    this.x = prevX; // Slide vertically
+                } else {
+                    // Can't move, revert
+                    this.x = prevX;
+                    this.y = prevY;
+                }
+            }
 
             // Update target to current position (prevents click-to-move interference)
             this.targetX = this.x;
@@ -304,20 +303,19 @@ class Player extends Combatant {
                 this.x += this.vx * dt;
                 this.y += this.vy * dt;
 
-                // TEMPORARY: Collision disabled for debugging
                 // Check walkability/collision
-                // if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y)) {
-                //     // Try sliding along walls
-                //     if (MapSystem.isWalkable(this.x, prevY)) {
-                //         this.y = prevY; // Slide horizontally
-                //     } else if (MapSystem.isWalkable(prevX, this.y)) {
-                //         this.x = prevX; // Slide vertically
-                //     } else {
-                //         // Can't move, revert
-                //         this.x = prevX;
-                //         this.y = prevY;
-                //     }
-                // }
+                if (typeof MapSystem !== 'undefined' && !MapSystem.isWalkable(this.x, this.y, this.radius)) {
+                    // Try sliding along walls
+                    if (MapSystem.isWalkable(this.x, prevY, this.radius)) {
+                        this.y = prevY; // Slide horizontally
+                    } else if (MapSystem.isWalkable(prevX, this.y, this.radius)) {
+                        this.x = prevX; // Slide vertically
+                    } else {
+                        // Can't move, revert
+                        this.x = prevX;
+                        this.y = prevY;
+                    }
+                }
 
                 // Stop if reached target
                 if (this.distanceTo({ x: this.targetX, y: this.targetY }) < moveSpeed * dt) {

@@ -366,12 +366,40 @@ const MapSystem = {
     },
 
     // Check if a position is walkable (pixel-based collision)
-    isWalkable(x, y) {
+    isWalkable(x, y, playerRadius = 15) {
         if (!this.currentMap) return true;
 
-        // TEMPORARY: Disable collision for Konoha hub
+        // Use pixel-based collision for Konoha hub
         if (this.currentMap.id === 'konoha_hub') {
-            return true; // Free movement for now
+            // If collision data isn't ready yet, allow movement
+            if (!this.collisionImageData || !this.collisionReady) {
+                return true; // Allow movement until collision loads
+            }
+
+            // IMPROVED: Check only 5 points (center + 4 cardinal directions)
+            // This is 44% faster and more forgiving than 9-point check
+            const checkPoints = [
+                { x: x, y: y },                      // Center
+                { x: x + playerRadius, y: y },       // Right
+                { x: x - playerRadius, y: y },       // Left
+                { x: x, y: y + playerRadius },       // Down
+                { x: x, y: y - playerRadius }        // Up
+            ];
+
+            // All check points must be on walkable color
+            for (let point of checkPoints) {
+                const pixelColor = this.getPixelColor(point.x, point.y);
+
+                if (!pixelColor) {
+                    return false; // Out of bounds
+                }
+
+                if (!this.colorsMatch(pixelColor, this.walkableColor, this.colorTolerance)) {
+                    return false; // Not on walkable color
+                }
+            }
+
+            return true; // All points are walkable
         }
 
         // Other maps: allow all movement
