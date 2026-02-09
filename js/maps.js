@@ -369,43 +369,9 @@ const MapSystem = {
     isWalkable(x, y) {
         if (!this.currentMap) return true;
 
-        // Use pixel-based collision for Konoha hub
+        // TEMPORARY: Disable collision for Konoha hub
         if (this.currentMap.id === 'konoha_hub') {
-            // If collision data isn't ready yet, allow movement
-            if (!this.collisionImageData || !this.collisionReady) {
-                return true; // Allow movement until collision loads
-            }
-
-            const playerRadius = 25;
-
-            // Check multiple points around player's collision circle
-            // Center + 8 points around the radius
-            const checkPoints = [
-                { x: x, y: y }, // Center
-                { x: x + playerRadius, y: y }, // Right
-                { x: x - playerRadius, y: y }, // Left
-                { x: x, y: y + playerRadius }, // Down
-                { x: x, y: y - playerRadius }, // Up
-                { x: x + playerRadius * 0.7, y: y + playerRadius * 0.7 }, // Bottom-right
-                { x: x - playerRadius * 0.7, y: y + playerRadius * 0.7 }, // Bottom-left
-                { x: x + playerRadius * 0.7, y: y - playerRadius * 0.7 }, // Top-right
-                { x: x - playerRadius * 0.7, y: y - playerRadius * 0.7 }  // Top-left
-            ];
-
-            // All check points must be on walkable color
-            for (let point of checkPoints) {
-                const pixelColor = this.getPixelColor(point.x, point.y);
-
-                if (!pixelColor) {
-                    return false; // Out of bounds
-                }
-
-                if (!this.colorsMatch(pixelColor, this.walkableColor, this.colorTolerance)) {
-                    return false; // Not on walkable color
-                }
-            }
-
-            return true; // All points are walkable
+            return true; // Free movement for now
         }
 
         // Other maps: allow all movement
