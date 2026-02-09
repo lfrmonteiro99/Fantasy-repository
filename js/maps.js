@@ -127,11 +127,12 @@ const MapSystem = {
     collisionCanvas: null,
     collisionCtx: null,
     collisionImageData: null,
+    collisionReady: false,
 
     // Walkable color definition (light green/yellow path color)
     // This is the color from the walkable paths in the map
     walkableColor: { r: 210, g: 230, b: 190 },
-    colorTolerance: 40, // Allow +/- 40 in each RGB channel
+    colorTolerance: 60, // Allow +/- 60 in each RGB channel (generous for GIF compression)
 
     // Load map
     loadMap(mapId, game) {
@@ -278,7 +279,28 @@ const MapSystem = {
 
             if (color) {
                 this.walkableColor = { r: color.r, g: color.g, b: color.b };
-                console.log(`🎨 Detected walkable color at spawn: RGB(${color.r}, ${color.g}, ${color.b})`);
+                console.log(`🎨 Detected walkable color at spawn (${spawnX}, ${spawnY}): RGB(${color.r}, ${color.g}, ${color.b})`);
+            } else {
+                console.error(`❌ Could not sample color at spawn position (${spawnX}, ${spawnY})`);
+            }
+        }
+
+        // Mark collision as ready
+        this.collisionReady = true;
+
+        // Recheck player position now that collision is ready
+        if (game && game.player) {
+            const isPlayerWalkable = this.isWalkable(game.player.x, game.player.y);
+            console.log(`🚶 Player at (${Math.floor(game.player.x)}, ${Math.floor(game.player.y)}): ${isPlayerWalkable ? '✓ Walkable' : '✗ Blocked'}`);
+
+            if (!isPlayerWalkable) {
+                console.log('🔄 Player in non-walkable area, searching for valid position...');
+                const walkablePos = this.findNearestWalkablePosition(game.player.x, game.player.y);
+                game.player.x = walkablePos.x;
+                game.player.y = walkablePos.y;
+                game.player.targetX = game.player.x;
+                game.player.targetY = game.player.y;
+                console.log(`📍 Relocated player to (${Math.floor(walkablePos.x)}, ${Math.floor(walkablePos.y)})`);
             }
         }
 
@@ -348,7 +370,12 @@ const MapSystem = {
         if (!this.currentMap) return true;
 
         // Use pixel-based collision for Konoha hub
-        if (this.currentMap.id === 'konoha_hub' && this.collisionImageData) {
+        if (this.currentMap.id === 'konoha_hub') {
+            // If collision data isn't ready yet, allow movement
+            if (!this.collisionImageData || !this.collisionReady) {
+                return true; // Allow movement until collision loads
+            }
+
             const playerRadius = 25;
 
             // Check multiple points around player's collision circle
